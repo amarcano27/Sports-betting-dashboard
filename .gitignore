@@ -1,0 +1,115 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv
+env.bak/
+venv.bak/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Streamlit
+.streamlit/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+logs/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Test files (optional - remove if you want to include tests)
+test_*.py
+*_test.py
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.cache
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+*.ipynb
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pytest
+.pytest_cache/
+
+# Sensitive data
+*.key
+*.pem
+*.p12
+*.jks
+secrets/
+credentials/
+
+# Build artifacts
+*.pyc
+*.pyo
+*.pyd
+
+# Local configuration
+local_settings.py
+local_config.py
+
+# Data files (optional - uncomment if you don't want to commit data)
+# data_archive/
+# *.json
+# *.csv
+
+# Screenshots (optional - uncomment if you don't want to commit screenshots)
+# portfolio/sports_betting_images/
+# portfolio/colorspark_images/
+

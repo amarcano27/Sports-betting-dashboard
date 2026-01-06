@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ColorSpark - Flutter Coloring App | Portfolio</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        .project-hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 100px 20px 60px;
+            text-align: center;
+            color: white;
+        }
+        .project-hero h1 {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            color: white;
+        }
+        .project-hero p {
+            font-size: 1.5rem;
+            opacity: 0.9;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .screenshot-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 40px 0;
+        }
+        .screenshot-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+        .screenshot-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .screenshot-item img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        .code-snippet {
+            background: #1e1e1e;
+            border-radius: 8px;
+            padding: 20px;
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+        .code-snippet pre {
+            color: #d4d4d4;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            margin: 0;
+        }
+        .back-link {
+            display: inline-block;
+            margin: 20px 0;
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">📊 Portfolio</div>
+            <div class="nav-links">
+                <a href="index.html">Home</a>
+                <a href="index.html#projects">Projects</a>
+                <a href="index.html#skills">Skills</a>
+                <a href="index.html#contact">Contact</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Project Hero -->
+    <section class="project-hero">
+        <div class="container">
+            <h1>🎨 ColorSpark</h1>
+            <p>A mobile coloring app built with Flutter/Dart that combines creativity and early learning for kids. Features AI-generated coloring pages, interactive sticker tools, and a freemium subscription model.</p>
+        </div>
+    </section>
+
+    <!-- Project Overview -->
+    <section class="featured-project" style="padding-top: 60px;">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">Mobile App</span>
+                <h2>Project Overview</h2>
+            </div>
+
+            <div style="max-width: 900px; margin: 0 auto;">
+                <p style="font-size: 1.1rem; line-height: 1.8; color: var(--text-secondary); margin-bottom: 30px;">
+                    <strong>ColorSpark</strong> is a mobile coloring app built with Flutter/Dart that combines creativity and early learning for kids. 
+                    It features AI-generated coloring pages, interactive sticker tools, and a freemium subscription model. 
+                    I led development from concept to beta testing.
+                </p>
+
+                <div class="project-badges" style="margin-bottom: 40px;">
+                    <span class="badge badge-python">Flutter</span>
+                    <span class="badge badge-streamlit">Dart</span>
+                    <span class="badge badge-ml">Mobile</span>
+                    <span class="badge badge-api">Web</span>
+                    <span class="badge badge-postgres">Animation</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tech Stack -->
+    <section class="skills-section">
+        <div class="container">
+            <h2 class="section-title">🛠️ Tech Stack</h2>
+            <div class="skills-grid">
+                <div class="skill-category">
+                    <h3>Framework & Language</h3>
+                    <div class="skill-tags">
+                        <span class="skill-tag">Flutter</span>
+                        <span class="skill-tag">Dart</span>
+                    </div>
+                </div>
+                <div class="skill-category">
+                    <h3>Development Tools</h3>
+                    <div class="skill-tags">
+                        <span class="skill-tag">Git</span>
+                        <span class="skill-tag">VSCode</span>
+                        <span class="skill-tag">Git Bash</span>
+                    </div>
+                </div>
+                <div class="skill-category">
+                    <h3>Testing & Deployment</h3>
+                    <div class="skill-tags">
+                        <span class="skill-tag">Android Emulator</span>
+                        <span class="skill-tag">Web Testing</span>
+                        <span class="skill-tag">Physical Devices</span>
+                    </div>
+                </div>
+                <div class="skill-category">
+                    <h3>External Services</h3>
+                    <div class="skill-tags">
+                        <span class="skill-tag">AI Image Generation</span>
+                        <span class="skill-tag">Freemium Model</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Core Features -->
+    <section class="project-highlights">
+        <div class="container">
+            <h2 class="section-title">✨ Core Features</h2>
+            <div class="highlights-grid">
+                <div class="highlight-card">
+                    <div class="highlight-icon">🎨</div>
+                    <h3>AI-Generated Coloring Pages</h3>
+                    <p>Creative engagement through AI-generated coloring pages that provide endless variety and keep kids entertained.</p>
+                </div>
+                <div class="highlight-card">
+                    <div class="highlight-icon">🧲</div>
+                    <h3>Interactive Stickers</h3>
+                    <p>Drag, resize, and rotate interactive sticker functionality for enhanced creativity and play.</p>
+                </div>
+                <div class="highlight-card">
+                    <div class="highlight-icon">🌌</div>
+                    <h3>Custom Category Interface</h3>
+                    <p>Beautiful animated space background with custom category selection interface for intuitive navigation.</p>
+                </div>
+                <div class="highlight-card">
+                    <div class="highlight-icon">🖼️</div>
+                    <h3>Smooth Horizontal Scroll</h3>
+                    <p>Polished UX with smooth horizontal scrolling and dynamic category box sizing for optimal user experience.</p>
+                </div>
+                <div class="highlight-card">
+                    <div class="highlight-icon">🛑</div>
+                    <h3>Freemium Paywall System</h3>
+                    <p>VIP subscription logic with freemium paywall system to monetize while providing value to free users.</p>
+                </div>
+                <div class="highlight-card">
+                    <div class="highlight-icon">🧪</div>
+                    <h3>Comprehensive QA Testing</h3>
+                    <p>Manual QA testing across emulators, physical devices, and web to ensure consistent performance.</p>
+                </div>
+                <div class="highlight-card">
+                    <div class="highlight-icon">🧭</div>
+                    <h3>Responsive UI</h3>
+                    <p>Fully responsive UI that works seamlessly across web and mobile platforms with consistent design.</p>
+                </div>
+                <div class="highlight-card">
+                    <div class="highlight-icon">🎭</div>
+                    <h3>Custom Animations</h3>
+                    <p>Smooth animations and transitions throughout the app for a polished, professional feel.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Screenshots -->
+    <section class="featured-project">
+        <div class="container">
+            <h2 class="section-title">📸 Screenshots & Demos</h2>
+            <div class="screenshot-grid" id="screenshotGrid">
+                <div class="screenshot-item">
+                    <img src="colorspark_images/Screenshot 2026-01-06 110841.png" alt="ColorSpark Splash Screen - Category Selection" onclick="window.open(this.src, '_blank')">
+                </div>
+                <div class="screenshot-item">
+                    <img src="colorspark_images/Screenshot 2026-01-06 110938.png" alt="ColorSpark Space Coloring Page" onclick="window.open(this.src, '_blank')">
+                </div>
+                <div class="screenshot-item">
+                    <img src="colorspark_images/Screenshot 2026-01-06 110956.png" alt="ColorSpark Cooking Coloring Page" onclick="window.open(this.src, '_blank')">
+                </div>
+            </div>
+            <p style="text-align: center; color: var(--text-secondary); margin-top: 20px;">
+                <em>Click images to view full size</em>
+            </p>
+        </div>
+    </section>
+
+    <!-- Code Snippets -->
+    <section class="skills-section">
+        <div class="container">
+            <h2 class="section-title">💻 Code Highlights</h2>
+            
+            <div style="max-width: 900px; margin: 0 auto;">
+                <h3 style="color: var(--primary-color); margin-top: 30px;">Horizontal Scroll Implementation</h3>
+                <div class="code-snippet">
+                    <pre>// Smooth horizontal scrolling with dynamic sizing
+ListView.builder(
+  scrollDirection: Axis.horizontal,
+  itemCount: categories.length,
+  itemBuilder: (context, index) {
+    return CategoryCard(
+      category: categories[index],
+      onTap: () => navigateToColoring(categories[index]),
+    );
+  },
+)</pre>
+                </div>
+
+                <h3 style="color: var(--primary-color); margin-top: 30px;">Custom Star Animation</h3>
+                <div class="code-snippet">
+                    <pre>// Animated stars in space background
+class StarAnimation extends StatefulWidget {
+  @override
+  _StarAnimationState createState() => _StarAnimationState();
+}
+
+class _StarAnimationState extends State&lt;StarAnimation&gt; 
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: Duration(seconds: 3),
+      vsync: this,
+    )..repeat();
+  }
+  // ... animation logic
+}</pre>
+                </div>
+
+                <h3 style="color: var(--primary-color); margin-top: 30px;">Sticker Drag & Drop Logic</h3>
+                <div class="code-snippet">
+                    <pre>// Interactive sticker functionality
+GestureDetector(
+  onPanUpdate: (details) {
+    setState(() {
+      stickerPosition = Offset(
+        stickerPosition.dx + details.delta.dx,
+        stickerPosition.dy + details.delta.dy,
+      );
+    });
+  },
+  child: Transform.scale(
+    scale: stickerScale,
+    child: Image.asset(stickerPath),
+  ),
+)</pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- GitHub & Links -->
+    <section class="project-highlights">
+        <div class="container">
+            <h2 class="section-title">🔗 Repository & Links</h2>
+            <div style="text-align: center; max-width: 600px; margin: 0 auto;">
+                <a href="https://github.com/amarcano27/ColorSpark" class="btn btn-primary" target="_blank" style="margin: 10px;">
+                    📁 GitHub Repository
+                </a>
+                <a href="file:///E:/colorspark/web_demo/index.html" class="btn btn-secondary" target="_blank" style="margin: 10px;">
+                    🎨 Try Web Demo
+                </a>
+                <a href="index.html" class="btn btn-secondary" style="margin: 10px;">
+                    🏠 Back to Portfolio
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Reflections -->
+    <section class="featured-project">
+        <div class="container">
+            <div class="section-header">
+                <h2>💭 Reflections & Lessons Learned</h2>
+            </div>
+            <div style="max-width: 900px; margin: 0 auto;">
+                <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 30px;">
+                    <p style="font-size: 1.1rem; line-height: 1.8; color: var(--text-secondary);">
+                        Building ColorSpark taught me how to manage UI responsiveness across devices, implement user-friendly gestures, 
+                        and plan for feature scalability. I also gained experience working with animations, dynamic layouts, and version 
+                        control via Git.
+                    </p>
+                    <p style="font-size: 1.1rem; line-height: 1.8; color: var(--text-secondary); margin-top: 20px;">
+                        The project challenged me to think about user experience from a child's perspective, ensuring the interface 
+                        was intuitive and engaging. Implementing the freemium model required careful consideration of user flow and 
+                        value proposition, while maintaining a smooth user experience.
+                    </p>
+                    <p style="font-size: 1.1rem; line-height: 1.8; color: var(--text-secondary); margin-top: 20px;">
+                        Through comprehensive testing across multiple platforms, I learned the importance of responsive design and 
+                        platform-specific optimizations. The project also reinforced the value of clean code architecture and proper 
+                        state management in Flutter applications.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Back to Portfolio -->
+    <section style="padding: 40px 0; text-align: center;">
+        <div class="container">
+            <a href="index.html" class="back-link">← Back to Portfolio</a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 Portfolio. Built with ❤️ using HTML, CSS, and modern web technologies.</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+    <script>
+        // Load screenshots dynamically
+        // Images are already in the HTML, no need to load dynamically
+    </script>
+</body>
+</html>
+
