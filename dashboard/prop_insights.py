@@ -483,7 +483,7 @@ def render_prop_insights(
                         "Home/Away": "🏠 Home" if game.get("home", True) else "✈️ Away"
                     })
                 if recent_data:
-                    st.dataframe(recent_data, use_container_width=True, hide_index=True)
+                    st.dataframe(recent_data, width="stretch", hide_index=True)
                 else:
                     st.info("No recent games data available")
         else:

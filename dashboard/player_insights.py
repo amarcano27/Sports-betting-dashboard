@@ -217,7 +217,7 @@ def render_player_insights_page():
                     # Show key stats
                     cols_to_show = ["date", "points", "rebounds", "assists"]
                     cols_to_show = [c for c in cols_to_show if c in h_df.columns]
-                    st.dataframe(h_df[cols_to_show].head(5), use_container_width=True, hide_index=True)
+                    st.dataframe(h_df[cols_to_show].head(5), width="stretch", hide_index=True)
                 else:
                     st.info(f"No recent games vs {opponent}")
 
@@ -332,7 +332,7 @@ def render_player_insights_page():
                     st.markdown("#### 📉 Performance Trend")
                     chart_data = [{"date": s["date"], pt: s.get(pt, 0), "opponent": s.get("opponent"), "home": s.get("home", True)} for s in stats[:20]]
                     fig = create_prop_chart(chart_data, pt, analysis_line, title=f"Last 20 Games: {pt.replace('_', ' ').title()}")
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, width="stretch")
 
     else:
         st.info("No props available for this game yet.")
@@ -391,7 +391,7 @@ def render_player_insights_page():
             
         # Filter cols that exist
         cols_to_show = [c for c in cols_to_show if c in df.columns]
-        st.dataframe(df[cols_to_show], use_container_width=True, hide_index=True)
+        st.dataframe(df[cols_to_show], width="stretch", hide_index=True)
     else:
         st.info("No historical stats available.")
 

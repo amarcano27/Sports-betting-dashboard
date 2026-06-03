@@ -8,11 +8,15 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 
 
-def format_odds(odds: int) -> str:
-    """Format American odds for display"""
-    if odds is None:
+def format_odds(odds) -> str:
+    """Format American odds for display (accepts int, float, or string)."""
+    if odds is None or odds == "":
         return "N/A"
-    return f"{odds:+d}"
+    try:
+        v = int(float(odds))
+        return f"{v:+d}"
+    except (ValueError, TypeError):
+        return str(odds)
 
 
 def calculate_hitrate(games: List[Dict], prop_type: str, line: float) -> Dict:
