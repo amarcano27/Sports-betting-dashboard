@@ -133,7 +133,7 @@ with col2:
                 <span style="font-family: 'JetBrains Mono', monospace; font-weight: 800; color: {'#10B981' if ev > 0 else '#EF4444'};">${ev:+.2f}</span>
             </div>
         </div>
-        """, unsafe_allow_html=True)
+        """.replace('\n', ''), unsafe_allow_html=True)
         
         slip["notes"] = st.text_area("Notes", placeholder="Add rationale here...")
         

@@ -47,7 +47,7 @@ def render_metric_card(label: str, value: str, delta: str = None, color_type: st
         {delta_html}
     </div>
     """
-    st.markdown(html_content, unsafe_allow_html=True)
+    st.markdown(html_content.replace('\n', ''), unsafe_allow_html=True)
 
 def render_prop_card(player_name, team, opponent, game_time, prop_type, line, over_odds, under_odds, model_proj, edge_pct, image_url=None):
     """Render the ultimate player prop card (PrizePicks/Action Network hybrid)."""
@@ -105,7 +105,6 @@ def render_prop_card(player_name, team, opponent, game_time, prop_type, line, ov
                 <div style="font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 800; color: {edge_color};">{edge_str}</div>
             </div>
         </div>
-        
         <!-- Line & Projection -->
         <div style="background: {TOKENS['bg_main']}; border-radius: 8px; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; border: 1px solid {TOKENS['border']}; margin-bottom: 12px;">
             <div style="text-align: center; flex: 1;">
@@ -118,7 +117,6 @@ def render_prop_card(player_name, team, opponent, game_time, prop_type, line, ov
                 <div style="font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 800; color: {TOKENS['cyan']};">{model_proj:.1f}</div>
             </div>
         </div>
-        
         <!-- Odds Buttons -->
         <div style="display: flex; gap: 8px;">
             <div style="flex: 1; background: {TOKENS['bg_panel_2']}; border: 1px solid {TOKENS['border_strong']}; border-radius: 8px; padding: 10px; text-align: center; transition: all 0.2s; cursor: pointer;" onmouseover="this.style.borderColor='{TOKENS['green']}'; this.style.background='{TOKENS['green_bg']}';" onmouseout="this.style.borderColor='{TOKENS['border_strong']}'; this.style.background='{TOKENS['bg_panel_2']}';">
@@ -132,7 +130,7 @@ def render_prop_card(player_name, team, opponent, game_time, prop_type, line, ov
         </div>
     </div>
     """
-    st.markdown(card_html, unsafe_allow_html=True)
+    st.markdown(card_html.replace('\n', ''), unsafe_allow_html=True)
 
 def render_game_card(sport, away_team, home_team, time_str, away_ml, home_ml, edge_pct, recommendation, model_prob, market_prob):
     """Render the ultimate game analysis card."""
@@ -156,7 +154,6 @@ def render_game_card(sport, away_team, home_team, time_str, away_ml, home_ml, ed
             </div>
             <div class="badge {badge_class}">{recommendation}</div>
         </div>
-        
         <!-- Body -->
         <div style="padding: 20px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
@@ -167,7 +164,6 @@ def render_game_card(sport, away_team, home_team, time_str, away_ml, home_ml, ed
                 <div style="font-size: 20px; font-weight: 800; color: {TOKENS['text_primary']};">@ {home_team}</div>
                 <div style="font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 800; color: {TOKENS['text_secondary']};">{h_ml_str}</div>
             </div>
-            
             <!-- Analysis Footer -->
             <div style="background: {TOKENS['bg_main']}; border-radius: 8px; padding: 12px; border: 1px solid {TOKENS['border']}; display: flex; justify-content: space-between; align-items: center;">
                 <div>
@@ -186,4 +182,4 @@ def render_game_card(sport, away_team, home_team, time_str, away_ml, home_ml, ed
         </div>
     </div>
     """
-    st.markdown(html_content, unsafe_allow_html=True)
+    st.markdown(html_content.replace('\n', ''), unsafe_allow_html=True)
