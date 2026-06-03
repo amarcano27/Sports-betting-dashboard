@@ -298,78 +298,10 @@ def get_bovada_line(player_id: str, game_id: str, prop_type: str) -> Optional[fl
 
 def calculate_opponent_defense_rating(opponent_team: str, prop_type: str) -> float:
     """
-    Calculate opponent's defensive rating for a specific stat type
-    Based on what players average when playing against this team
-    
-    Returns:
-        Multiplier (1.0 = average defense, >1.0 = weak defense, <1.0 = strong defense)
+    Calculate opponent's defensive rating for a specific stat type.
+    Currently disabled (returns 1.0) until dynamic league averages are implemented.
     """
-    try:
-        # Get all games where opponent was the opposing team
-        # This shows what players actually scored/rebounded/assisted vs this team
-        opponent_games = (
-            supabase.table("player_game_stats")
-            .select("points, rebounds, assists")
-            .eq("opponent", opponent_team)
-            .order("date", desc=True)
-            .limit(100)  # Last 100 games against this opponent (across all players)
-            .execute()
-            .data
-        )
-        
-        if not opponent_games or len(opponent_games) < 10:
-            return 1.0  # Not enough data, use neutral
-        
-        # Calculate what players average vs this opponent
-        prop_values = []
-        for game in opponent_games:
-            value = None
-            if prop_type == "points":
-                value = game.get("points")
-            elif prop_type == "rebounds":
-                value = game.get("rebounds")
-            elif prop_type == "assists":
-                value = game.get("assists")
-            elif prop_type == "pra":
-                value = (
-                    (game.get("points") or 0) +
-                    (game.get("rebounds") or 0) +
-                    (game.get("assists") or 0)
-                )
-            
-            if value is not None and value > 0:  # Only count games where player played
-                prop_values.append(value)
-        
-        if not prop_values or len(prop_values) < 5:
-            return 1.0
-        
-        # Calculate average allowed by this opponent
-        avg_allowed = sum(prop_values) / len(prop_values)
-        
-        # Get league average for this prop type (based on typical player stats)
-        # These are rough estimates - could be improved with actual league averages
-        league_averages = {
-            "points": 12.0,  # Average starter points
-            "rebounds": 5.0,  # Average starter rebounds
-            "assists": 3.5,  # Average starter assists
-            "pra": 20.5,  # Average starter PRA
-            "threes": 1.8  # Average starter 3PM
-        }
-        
-        league_avg = league_averages.get(prop_type, 10.0)
-        
-        # Calculate defensive rating
-        # If opponent allows more than league avg, they're weak (multiplier > 1.0)
-        # If opponent allows less than league avg, they're strong (multiplier < 1.0)
-        if league_avg > 0:
-            defense_rating = avg_allowed / league_avg
-            # Clamp between 0.85 and 1.15 to avoid extreme adjustments
-            # This gives a ±15% adjustment based on defense
-            return max(0.85, min(1.15, defense_rating))
-        
-        return 1.0
-    except:
-        return 1.0
+    return 1.0
 
 
 def get_player_rest_days(player_id: str, game_date: datetime) -> int:
@@ -431,9 +363,7 @@ def calculate_pace_adjustment(game_id: str, prop_type: str) -> float:
     Returns:
         Multiplier for pace (faster pace = higher multiplier)
     """
-    # TODO: Implement pace calculation
-    # Could use team pace stats, game total, etc.
-    # For now, return neutral
+    # Currently a stub. In a full implementation, this would query team pace stats.
     return 1.0
 
 

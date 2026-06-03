@@ -26,123 +26,65 @@ from rapidfuzz import process, fuzz
 st.markdown("""
 <style>
     [data-testid="stAppViewContainer"] {
-        background: linear-gradient(135deg, #0e1117 0%, #1a1d29 100%);
+        background: #0a0a0a;
     }
     .prop-type-chip {
         display: inline-block;
         padding: 0.5rem 1rem;
         margin: 0.25rem;
-        background: #334155;
-        color: #cbd5e1;
+        background: #121212;
+        color: #a3a3a3;
         border-radius: 20px;
-        border: 2px solid #475569;
+        border: 1px solid #262626;
         cursor: pointer;
         transition: all 0.2s;
         font-size: 0.85rem;
-        font-weight: 500;
+        font-weight: 600;
+        font-family: 'Inter', sans-serif;
     }
     .prop-type-chip:hover {
-        background: #475569;
-        border-color: #64748b;
+        background: #1a1a1a;
+        border-color: #333333;
+        color: #ffffff;
     }
     .prop-type-chip.active {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border-color: #667eea;
-    }
-    .player-prop-card {
-        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-        border-radius: 12px;
-        padding: 1.25rem;
-        margin: 0.75rem 0;
-        border: 2px solid #475569;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-        position: relative;
-    }
-    .player-prop-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
-        border-color: #64748b;
-    }
-    .prop-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1rem;
-    }
-    .prop-stat {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: #f8fafc;
-    }
-    .prop-line {
-        font-size: 2rem;
-        font-weight: 700;
-        color: #667eea;
-        margin: 0.5rem 0;
-    }
-    .prop-odds-container {
-        display: flex;
-        gap: 1rem;
-        margin: 1rem 0;
-    }
-    .odds-button {
-        flex: 1;
-        padding: 0.75rem;
-        border-radius: 8px;
-        text-align: center;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s;
-        border: 2px solid;
-    }
-    .odds-button.over {
-        background: rgba(16, 185, 129, 0.1);
-        border-color: #10b981;
-        color: #10b981;
-    }
-    .odds-button.under {
-        background: rgba(239, 68, 68, 0.1);
-        border-color: #ef4444;
-        color: #ef4444;
-    }
-    .odds-button:hover {
-        transform: scale(1.02);
-        opacity: 0.9;
+        background: rgba(59, 130, 246, 0.1);
+        color: #3b82f6;
+        border-color: #3b82f6;
     }
     .hitrate-badge {
-        display: inline-block;
-        padding: 0.25rem 0.75rem;
-        border-radius: 12px;
+        padding: 4px 8px;
+        border-radius: 6px;
         font-size: 0.75rem;
-        font-weight: 600;
-        margin-left: 0.5rem;
+        font-weight: 700;
+        font-family: 'JetBrains Mono', monospace;
     }
     .hitrate-badge.good {
-        background: rgba(16, 185, 129, 0.2);
+        background: rgba(16, 185, 129, 0.1);
         color: #10b981;
+        border: 1px solid rgba(16, 185, 129, 0.3);
     }
     .hitrate-badge.bad {
-        background: rgba(239, 68, 68, 0.2);
+        background: rgba(239, 68, 68, 0.1);
         color: #ef4444;
+        border: 1px solid rgba(239, 68, 68, 0.3);
     }
     .player-search-result {
         padding: 0.75rem;
         margin: 0.5rem 0;
-        background: rgba(30, 41, 59, 0.5);
+        background: #121212;
         border-radius: 8px;
-        border: 1px solid #475569;
+        border: 1px solid #262626;
         cursor: pointer;
         transition: all 0.2s;
     }
     .player-search-result:hover {
-        background: rgba(51, 65, 85, 0.7);
-        border-color: #64748b;
+        background: #1a1a1a;
+        border-color: #333333;
     }
     .player-search-result.selected {
-        background: rgba(102, 126, 234, 0.2);
-        border-color: #667eea;
+        background: rgba(59, 130, 246, 0.1);
+        border-color: #3b82f6;
     }
     .compact-header {
         display: flex;
@@ -312,7 +254,7 @@ with st.sidebar:
             if st.button(
                 player_display, 
                 key=f"select_player_{player.get('id')}",
-                use_container_width=True,
+                width="stretch",
                 type="primary" if is_selected else "secondary"
             ):
                 st.session_state.selected_player_props = player
@@ -375,7 +317,7 @@ with st.sidebar:
     
     st.divider()
     
-    if st.button("🔄 Sync Players", use_container_width=True):
+    if st.button("🔄 Sync Players", width="stretch"):
         st.info("Run: python workers/fetch_player_stats.py --sync-players")
 
 # Main content
@@ -391,7 +333,10 @@ if not st.session_state.selected_player_props:
     st.stop()
 
 # Player selected - show props
-selected_player = st.session_state.selected_player_props
+selected_player = st.session_state.get("selected_player_props")
+if selected_player is None:
+    st.info("Search for a player above to view their prop analysis.")
+    st.stop()
 player_id = selected_player.get("id")
 player_name = selected_player.get("name", "Unknown")
 player_position = selected_player.get("position", "N/A")
@@ -595,7 +540,7 @@ for i, prop_type in enumerate(prop_types):
         if st.button(
             prop_type,
             key=f"prop_filter_{i}",
-            use_container_width=True,
+            width="stretch",
             type="primary" if is_active else "secondary"
         ):
             st.session_state.selected_prop_type_filter = prop_type
@@ -699,41 +644,39 @@ for idx, ((prop_type, line), prop_data) in enumerate(props_by_type.items()):
         # Create prop card
         prop_type_display = prop_type.replace("_", " ").title()
         
+        # New Sleek Design
+        over_str = format_odds(int(best_over)) if best_over else "N/A"
+        under_str = format_odds(int(best_under)) if best_under else "N/A"
+        
         card_html = f"""
-        <div class="player-prop-card">
-            <div class="prop-header">
-                <div>
-                    <div class="prop-stat">{prop_type_display}</div>
-                    <div class="prop-line">{line}</div>
+        <div style="background: #121212; border: 1px solid #262626; border-radius: 16px; padding: 16px; margin-bottom: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div style="font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 700; color: #a3a3a3; text-transform: uppercase;">
+                    {prop_type_display}
                 </div>
                 {hitrate_info}
             </div>
-            <div class="prop-odds-container">
+            
+            <div style="text-align: center; margin-bottom: 16px;">
+                <div style="font-family: 'JetBrains Mono', monospace; font-size: 32px; font-weight: 800; color: #ffffff;">
+                    {line}
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 8px;">
+                <div style="flex: 1; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 10px; text-align: center;">
+                    <div style="font-size: 11px; font-weight: 700; color: #10b981; text-transform: uppercase;">Over</div>
+                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 700; color: #ffffff; margin-top: 2px;">{over_str}</div>
+                    <div style="font-size: 10px; color: #737373; margin-top: 2px;">{best_over_book or '-'}</div>
+                </div>
+                <div style="flex: 1; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 10px; text-align: center;">
+                    <div style="font-size: 11px; font-weight: 700; color: #ef4444; text-transform: uppercase;">Under</div>
+                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 700; color: #ffffff; margin-top: 2px;">{under_str}</div>
+                    <div style="font-size: 10px; color: #737373; margin-top: 2px;">{best_under_book or '-'}</div>
+                </div>
+            </div>
+        </div>
         """
-        
-        if best_over:
-            card_html += f"""
-                <div class="odds-button over">
-                    <div style="font-size: 0.75rem; opacity: 0.8;">Over</div>
-                    <div style="font-size: 1.1rem; font-weight: 700;">{format_odds(int(best_over))}</div>
-                    <div style="font-size: 0.7rem; opacity: 0.7;">{best_over_book}</div>
-                </div>
-            """
-        else:
-            card_html += '<div class="odds-button over" style="opacity: 0.5;">Over N/A</div>'
-        
-        if best_under:
-            card_html += f"""
-                <div class="odds-button under">
-                    <div style="font-size: 0.75rem; opacity: 0.8;">Under</div>
-                    <div style="font-size: 1.1rem; font-weight: 700;">{format_odds(int(best_under))}</div>
-                    <div style="font-size: 0.7rem; opacity: 0.7;">{best_under_book}</div>
-                </div>
-            """
-        else:
-            card_html += '<div class="odds-button under" style="opacity: 0.5;">Under N/A</div>'
-        
-        card_html += "</div></div>"
         
         st.markdown(card_html, unsafe_allow_html=True)
         
@@ -741,10 +684,10 @@ for idx, ((prop_type, line), prop_data) in enumerate(props_by_type.items()):
         if best_over or best_under:
             col_a, col_b = st.columns(2)
             with col_a:
-                if best_over and st.button(f"➕ Over", key=f"add_over_{prop_type}_{line}_{idx}", use_container_width=True):
+                if best_over and st.button(f"➕ Over", key=f"add_over_{prop_type}_{line}_{idx}", width="stretch"):
                     st.success("Added to slip!")
             with col_b:
-                if best_under and st.button(f"➕ Under", key=f"add_under_{prop_type}_{line}_{idx}", use_container_width=True):
+                if best_under and st.button(f"➕ Under", key=f"add_under_{prop_type}_{line}_{idx}", width="stretch"):
                     st.success("Added to slip!")
 
 # Game Lines Section
@@ -793,7 +736,7 @@ if game_odds:
                 lines_data["Total"][1] = f"Under {odd.get('line', 'N/A')} | {format_odds(odd['price'])}"
     
     lines_df = pd.DataFrame(lines_data)
-    st.dataframe(lines_df, use_container_width=True, hide_index=True)
+    st.dataframe(lines_df, width="stretch", hide_index=True)
 else:
     st.info("No game lines available")
 
@@ -828,7 +771,7 @@ if player_stats:
                             "Average": [hitrate_data["averages"].get(p, "N/A") for p in periods],
                             "Hitrate (%)": [hitrate_data["hitrates"].get(p, "N/A") for p in periods]
                         }
-                        st.dataframe(pd.DataFrame(hitrate_table), use_container_width=True, hide_index=True)
+                        st.dataframe(pd.DataFrame(hitrate_table), width="stretch", hide_index=True)
                         
                         # Show chart
                         chart_fig = create_prop_chart(
@@ -837,5 +780,5 @@ if player_stats:
                             common_line,
                             title=f"{prop_type.title()} Performance"
                         )
-                        st.plotly_chart(chart_fig, use_container_width=True)
+                        st.plotly_chart(chart_fig, width="stretch")
 

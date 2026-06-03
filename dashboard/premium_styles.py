@@ -1,421 +1,495 @@
 """
-PREMIUM MILLION-DOLLAR UI STYLES
-Enhanced visual design with animations, gradients, and premium effects
+Sports Betting Dashboard — Clean, Data-Focused Theme
+Inspired by professional trading terminals and the BETTING_METHODOLOGY.md cart format.
+
+Design principles:
+- High contrast for legibility (WCAG AA+)
+- Semantic colors only — no decorative gradients
+- Dark navy background for long sessions, accent colors for status
+- Card-based layouts with clear hierarchy
 """
 import streamlit as st
 
+
+# ── DESIGN TOKENS ──────────────────────────────────────────────
+TOKENS = {
+    # Backgrounds (PrizePicks / Modern Dark Mode)
+    "bg_main":      "#0a0a0a",   # Deepest black/gray
+    "bg_panel":     "#121212",   # Card background
+    "bg_panel_2":   "#1a1a1a",   # Hover state / secondary card
+    "bg_input":     "#1f1f1f",   # Form inputs
+    "border":       "#262626",   # Subtle dividers
+    "border_strong":"#333333",
+
+    # Text
+    "text_primary":   "#ffffff",
+    "text_secondary": "#a3a3a3",
+    "text_muted":     "#737373",
+    "text_dim":       "#525252",
+
+    # Semantic — bet status (Neon accents)
+    "green":        "#10b981",   # Emerald green (Over / Hit)
+    "green_bg":     "rgba(16, 185, 129, 0.1)",
+    "green_dim":    "#059669",
+    "red":          "#ef4444",   # Rose red (Under / Miss)
+    "red_bg":       "rgba(239, 68, 68, 0.1)",
+    "red_dim":      "#dc2626",
+    "amber":        "#f59e0b",   # Amber (Edge / Value)
+    "amber_bg":     "rgba(245, 158, 11, 0.1)",
+    "blue":         "#3b82f6",   # Info
+    "blue_bg":      "rgba(59, 130, 246, 0.1)",
+    "purple":       "#8b5cf6",   # NBA
+    "teal":         "#06b6d4",   # NHL
+    "gold":         "#eab308",   # Rank #1
+    "silver":       "#d4d4d8",
+    "bronze":       "#b45309",
+}
+
+
+def color(name: str) -> str:
+    return TOKENS.get(name, "#FFFFFF")
+
+
 def apply_premium_theme():
-    """Apply premium million-dollar styling"""
-    st.markdown("""
+    """Apply clean data-focused dashboard theme."""
+    st.markdown(f"""
 <style>
-    /* ========== PREMIUM FONTS ========== */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
-    
-    * {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    }
-    
-    /* ========== PREMIUM BACKGROUND ========== */
-    .stApp {
-        background: #000000;
-        background-image: 
-            radial-gradient(circle at 10% 20%, rgba(0, 229, 255, 0.08) 0%, transparent 30%),
-            radial-gradient(circle at 90% 80%, rgba(138, 43, 226, 0.08) 0%, transparent 30%),
-            radial-gradient(circle at 50% 50%, rgba(255, 46, 99, 0.05) 0%, transparent 40%),
-            linear-gradient(180deg, #0a0a0a 0%, #000000 100%);
-        background-attachment: fixed;
-    }
-    
-    /* ========== ANIMATED GRADIENT OVERLAY ========== */
-    .stApp::before {
-        content: '';
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: 
-            radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
-                rgba(0, 229, 255, 0.06), 
-                transparent 40%);
-        pointer-events: none;
-        z-index: 0;
-    }
-    
-    /* ========== SIDEBAR PREMIUM ========== */
-    section[data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #0a0a0a 0%, #000000 100%);
-        border-right: 1px solid rgba(0, 229, 255, 0.1);
-        box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5);
-    }
-    
-    section[data-testid="stSidebar"]::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        right: 0;
-        width: 1px;
-        height: 100%;
-        background: linear-gradient(180deg, 
-            transparent 0%, 
-            rgba(0, 229, 255, 0.5) 50%, 
-            transparent 100%);
-        animation: sidebarGlow 3s ease-in-out infinite;
-    }
-    
-    @keyframes sidebarGlow {
-        0%, 100% { opacity: 0.3; }
-        50% { opacity: 1; }
-    }
-    
-    [data-testid="stSidebarNav"] span,
-    [data-testid="stSidebarNav"] a {
-        color: #FFFFFF !important;
-        font-weight: 600;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    
-    [data-testid="stSidebarNav"] a:hover {
-        color: #00E5FF !important;
-        transform: translateX(4px);
-    }
-    
-    section[data-testid="stSidebar"] h1, 
-    section[data-testid="stSidebar"] h2, 
-    section[data-testid="stSidebar"] h3,
-    section[data-testid="stSidebar"] label {
-        color: #FFFFFF !important;
-        font-weight: 700;
-    }
-    
-    /* ========== PREMIUM CARDS ========== */
-    .prop-card {
-        background: linear-gradient(135deg, 
-            rgba(20, 20, 20, 0.95) 0%, 
-            rgba(26, 26, 26, 0.95) 100%);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 20px;
-        padding: 24px;
-        margin-bottom: 20px;
-        position: relative;
-        overflow: hidden;
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 
-            0 4px 24px rgba(0, 0, 0, 0.4),
-            inset 0 1px 0 rgba(255, 255, 255, 0.05);
-        backdrop-filter: blur(20px);
-    }
-    
-    .prop-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 2px;
-        background: linear-gradient(90deg, 
-            transparent, 
-            rgba(0, 229, 255, 0.8), 
-            rgba(138, 43, 226, 0.8),
-            transparent);
-        opacity: 0;
-        transition: opacity 0.4s;
-    }
-    
-    .prop-card::after {
-        content: '';
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: radial-gradient(circle, rgba(0, 229, 255, 0.1) 0%, transparent 70%);
-        opacity: 0;
-        transition: opacity 0.6s;
-    }
-    
-    .prop-card:hover {
-        border-color: rgba(0, 229, 255, 0.4);
-        transform: translateY(-8px) scale(1.02);
-        box-shadow: 
-            0 20px 60px rgba(0, 229, 255, 0.2),
-            0 0 40px rgba(138, 43, 226, 0.1),
-            inset 0 1px 0 rgba(255, 255, 255, 0.1);
-    }
-    
-    .prop-card:hover::before {
-        opacity: 1;
-        animation: shimmer 2s linear infinite;
-    }
-    
-    .prop-card:hover::after {
-        opacity: 1;
-    }
-    
-    @keyframes shimmer {
-        0% { transform: translateX(-100%); }
-        100% { transform: translateX(100%); }
-    }
-    
-    /* ========== PREMIUM TYPOGRAPHY ========== */
-    h1, h2, h3, h4, h5, h6 {
-        font-weight: 800;
-        letter-spacing: -0.02em;
-        background: linear-gradient(135deg, #FFFFFF 0%, #E0E0E0 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        text-shadow: none;
-        position: relative;
-    }
-    
-    h1 {
-        font-size: 3.5rem !important;
-        line-height: 1.1;
-        margin-bottom: 0.5rem;
-    }
-    
-    h2 {
-        font-size: 2.5rem !important;
-        margin-top: 2rem;
-    }
-    
-    p, li, span, div {
-        color: #E0E0E0;
-        line-height: 1.7;
-    }
-    
-    /* ========== PREMIUM BUTTONS ========== */
-    .stButton > button, div[data-testid="stButton"] > button {
-        width: 100%;
-        background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%) !important;
-        color: #FFFFFF !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        border-radius: 12px !important;
-        padding: 12px 24px !important;
+    /* ── Fonts ─────────────────────────────────────────── */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap');
+
+    html, body, [class*="css"], .stApp {{
+        font-family: 'Inter', -apple-system, system-ui, sans-serif !important;
+    }}
+
+    /* ── App background ────────────────────────────────── */
+    .stApp {{
+        background: {TOKENS["bg_main"]} !important;
+    }}
+
+    [data-testid="stMain"], .main .block-container {{
+        background: {TOKENS["bg_main"]};
+        padding-top: 1.5rem !important;
+        max-width: 1400px;
+    }}
+
+    /* ── Sidebar ───────────────────────────────────────── */
+    section[data-testid="stSidebar"] {{
+        background: {TOKENS["bg_panel"]} !important;
+        border-right: 1px solid {TOKENS["border"]} !important;
+    }}
+
+    [data-testid="stSidebarNav"] {{
+        padding-top: 1rem;
+    }}
+
+    [data-testid="stSidebarNav"] a {{
+        color: {TOKENS["text_secondary"]} !important;
         font-weight: 600 !important;
-        font-size: 0.95rem !important;
-        letter-spacing: 0.02em !important;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        position: relative !important;
-        overflow: hidden !important;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
-    }
-    
-    .stButton > button::before, div[data-testid="stButton"] > button::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, 
-            transparent, 
-            rgba(255, 255, 255, 0.1), 
-            transparent);
-        transition: left 0.5s;
-    }
-    
-    .stButton > button:hover::before, div[data-testid="stButton"] > button:hover::before {
-        left: 100%;
-    }
-    
-    .stButton > button:hover, div[data-testid="stButton"] > button:hover {
-        background: linear-gradient(135deg, #00E5FF 0%, #00B8CC 100%) !important;
-        color: #000000 !important;
-        border-color: #00E5FF !important;
-        transform: translateY(-2px) !important;
-        box-shadow: 
-            0 12px 24px rgba(0, 229, 255, 0.3),
-            0 0 40px rgba(0, 229, 255, 0.2) !important;
-    }
-    
-    .stButton > button:active, div[data-testid="stButton"] > button:active {
-        transform: translateY(0) !important;
-    }
-    
-    /* ========== PREMIUM METRICS ========== */
-    div[data-testid="stMetricValue"] {
-        font-family: 'JetBrains Mono', monospace !important;
-        font-size: 2.5rem !important;
+        font-size: 14px !important;
+        padding: 8px 12px !important;
+        border-radius: 6px !important;
+        margin: 2px 8px !important;
+        transition: all 0.15s ease !important;
+    }}
+
+    [data-testid="stSidebarNav"] a:hover {{
+        background: {TOKENS["bg_panel_2"]} !important;
+        color: {TOKENS["green"]} !important;
+    }}
+
+    [data-testid="stSidebarNav"] [aria-current="page"] {{
+        background: {TOKENS["green_bg"]} !important;
+        color: {TOKENS["green"]} !important;
+        border-left: 3px solid {TOKENS["green"]} !important;
+    }}
+
+    /* ── Typography ────────────────────────────────────── */
+    h1, h2, h3, h4, h5, h6 {{
+        color: {TOKENS["text_primary"]} !important;
+        font-family: 'Inter', sans-serif !important;
         font-weight: 700 !important;
-        background: linear-gradient(135deg, #FFFFFF 0%, #00E5FF 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-    
-    div[data-testid="stMetricLabel"] {
-        color: #CCCCCC !important;
-        font-size: 0.85rem !important;
-        text-transform: uppercase !important;
-        letter-spacing: 0.1em !important;
+        letter-spacing: -0.02em;
+    }}
+
+    h1 {{ font-size: 2rem !important; margin-bottom: 0.5rem !important; }}
+    h2 {{ font-size: 1.4rem !important; }}
+    h3 {{ font-size: 1.15rem !important; color: {TOKENS["text_secondary"]} !important; }}
+
+    p, span, div, label {{
+        color: {TOKENS["text_secondary"]};
+    }}
+
+    .stCaption, [data-testid="stCaptionContainer"] {{
+        color: {TOKENS["text_muted"]} !important;
+        font-size: 13px !important;
+    }}
+
+    /* ── Buttons ───────────────────────────────────────── */
+    .stButton > button {{
+        background: {TOKENS["bg_panel_2"]} !important;
+        color: {TOKENS["text_primary"]} !important;
+        border: 1px solid {TOKENS["border_strong"]} !important;
+        border-radius: 6px !important;
         font-weight: 600 !important;
-    }
-    
-    /* ========== PREMIUM INPUTS ========== */
-    .stSelectbox, .stMultiSelect, .stTextInput, .stNumberInput {
-        transition: all 0.3s;
-    }
-    
-    .stSelectbox > div > div,
-    .stMultiSelect > div > div,
-    .stTextInput > div > div,
-    .stNumberInput > div > div {
-        background: rgba(26, 26, 26, 0.8) !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        border-radius: 12px !important;
-        color: #FFFFFF !important;
-        backdrop-filter: blur(10px);
-        transition: all 0.3s;
-    }
-    
-    .stSelectbox > div > div:hover,
-    .stMultiSelect > div > div:hover,
-    .stTextInput > div > div:hover,
-    .stNumberInput > div > div:hover {
-        border-color: rgba(0, 229, 255, 0.4) !important;
-        box-shadow: 0 0 20px rgba(0, 229, 255, 0.1);
-    }
-    
-    /* ========== PREMIUM CHECKBOX/RADIO ========== */
-    .stCheckbox, .stRadio {
-        color: #FFFFFF !important;
-    }
-    
-    /* ========== PREMIUM DATAFRAMES ========== */
-    div[data-testid="stDataFrame"] {
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 16px;
-        overflow: hidden;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-        backdrop-filter: blur(10px);
-    }
-    
-    /* ========== PREMIUM PROGRESS BARS ========== */
-    .stProgress > div > div > div > div {
-        background: linear-gradient(90deg, #00E5FF 0%, #8A2BE2 100%);
-        box-shadow: 0 0 20px rgba(0, 229, 255, 0.5);
-    }
-    
-    /* ========== PREMIUM BADGES ========== */
-    .badge {
-        padding: 6px 12px;
+        padding: 0.5rem 1rem !important;
+        transition: all 0.15s ease !important;
+    }}
+
+    .stButton > button:hover {{
+        background: {TOKENS["green_bg"]} !important;
+        border-color: {TOKENS["green"]} !important;
+        color: {TOKENS["green"]} !important;
+        transform: none !important;
+    }}
+
+    .stButton > button[kind="primary"] {{
+        background: {TOKENS["green_dim"]} !important;
+        color: white !important;
+        border-color: {TOKENS["green"]} !important;
+    }}
+
+    .stButton > button[kind="primary"]:hover {{
+        background: {TOKENS["green"]} !important;
+    }}
+
+    /* ── Inputs ────────────────────────────────────────── */
+    .stTextInput input, .stNumberInput input, .stSelectbox > div > div,
+    textarea, .stDateInput input {{
+        background: {TOKENS["bg_input"]} !important;
+        color: {TOKENS["text_primary"]} !important;
+        border: 1px solid {TOKENS["border"]} !important;
+        border-radius: 6px !important;
+        font-family: 'JetBrains Mono', monospace !important;
+    }}
+
+    .stTextInput input:focus, .stNumberInput input:focus {{
+        border-color: {TOKENS["green"]} !important;
+        box-shadow: 0 0 0 1px {TOKENS["green"]}33 !important;
+    }}
+
+    label {{
+        color: {TOKENS["text_secondary"]} !important;
+        font-weight: 500 !important;
+        font-size: 13px !important;
+    }}
+
+    /* ── Metrics ───────────────────────────────────────── */
+    [data-testid="stMetric"] {{
+        background: {TOKENS["bg_panel"]};
+        padding: 16px;
         border-radius: 8px;
-        font-size: 0.75rem;
+        border: 1px solid {TOKENS["border"]};
+    }}
+
+    [data-testid="stMetricLabel"] {{
+        color: {TOKENS["text_muted"]} !important;
+        font-size: 12px !important;
+        font-weight: 600 !important;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+    }}
+
+    [data-testid="stMetricValue"] {{
+        color: {TOKENS["text_primary"]} !important;
+        font-family: 'JetBrains Mono', monospace !important;
+        font-weight: 700 !important;
+        font-size: 1.8rem !important;
+    }}
+
+    [data-testid="stMetricDelta"] {{
+        font-family: 'JetBrains Mono', monospace !important;
+        font-weight: 600 !important;
+    }}
+
+    /* ── Tabs ──────────────────────────────────────────── */
+    .stTabs [data-baseweb="tab-list"] {{
+        background: {TOKENS["bg_panel"]};
+        border-radius: 8px;
+        padding: 4px;
+        gap: 2px;
+        border: 1px solid {TOKENS["border"]};
+    }}
+
+    .stTabs [data-baseweb="tab"] {{
+        background: transparent !important;
+        color: {TOKENS["text_muted"]} !important;
+        font-weight: 600 !important;
+        padding: 8px 16px !important;
+        border-radius: 6px !important;
+        border: none !important;
+    }}
+
+    .stTabs [aria-selected="true"] {{
+        background: {TOKENS["bg_panel_2"]} !important;
+        color: {TOKENS["green"]} !important;
+        box-shadow: inset 0 -2px 0 {TOKENS["green"]} !important;
+    }}
+
+    /* ── Tables / DataFrames ───────────────────────────── */
+    [data-testid="stDataFrame"], [data-testid="stTable"] {{
+        background: {TOKENS["bg_panel"]};
+        border-radius: 8px;
+        border: 1px solid {TOKENS["border"]};
+    }}
+
+    [data-testid="stDataFrame"] table {{
+        font-family: 'Inter', sans-serif !important;
+        font-size: 13px !important;
+    }}
+
+    [data-testid="stDataFrame"] thead tr th {{
+        background: {TOKENS["bg_panel_2"]} !important;
+        color: {TOKENS["text_muted"]} !important;
+        font-weight: 700 !important;
+        font-size: 11px !important;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-bottom: 1px solid {TOKENS["border_strong"]} !important;
+    }}
+
+    [data-testid="stDataFrame"] tbody tr {{
+        background: {TOKENS["bg_panel"]} !important;
+    }}
+
+    [data-testid="stDataFrame"] tbody tr:hover {{
+        background: {TOKENS["bg_panel_2"]} !important;
+    }}
+
+    [data-testid="stDataFrame"] tbody td {{
+        color: {TOKENS["text_primary"]} !important;
+        border-bottom: 1px solid {TOKENS["border"]} !important;
+    }}
+
+    /* ── Alerts / Info ─────────────────────────────────── */
+    [data-baseweb="notification"] {{
+        border-radius: 8px !important;
+        border-width: 1px !important;
+        border-style: solid !important;
+    }}
+
+    div[data-testid="stAlert"][data-baseweb="notification"] {{
+        background: {TOKENS["bg_panel"]} !important;
+        border-color: {TOKENS["border"]} !important;
+        color: {TOKENS["text_primary"]} !important;
+    }}
+
+    /* Success alert */
+    div[role="alert"]:has(svg[fill="currentColor"]) {{
+        background: {TOKENS["green_bg"]} !important;
+    }}
+
+    /* ── Expander ──────────────────────────────────────── */
+    [data-testid="stExpander"] {{
+        background: {TOKENS["bg_panel"]} !important;
+        border: 1px solid {TOKENS["border"]} !important;
+        border-radius: 8px !important;
+    }}
+
+    [data-testid="stExpander"] summary {{
+        color: {TOKENS["text_primary"]} !important;
+        font-weight: 600 !important;
+    }}
+
+    /* ── Custom utility classes ───────────────────────── */
+    .play-card {{
+        background: {TOKENS["bg_panel"]};
+        border: 1px solid {TOKENS["border"]};
+        border-radius: 10px;
+        padding: 18px;
+        margin: 12px 0;
+        transition: all 0.15s ease;
+    }}
+
+    .play-card:hover {{
+        border-color: {TOKENS["border_strong"]};
+    }}
+
+    .play-card.best-value {{
+        border-left: 4px solid {TOKENS["green"]};
+        background: linear-gradient(90deg, {TOKENS["green_bg"]}55 0%, {TOKENS["bg_panel"]} 60%);
+    }}
+
+    .play-card.strong {{
+        border-left: 4px solid {TOKENS["green_dim"]};
+    }}
+
+    .play-card.lean {{
+        border-left: 4px solid {TOKENS["amber"]};
+        background: linear-gradient(90deg, {TOKENS["amber_bg"]}55 0%, {TOKENS["bg_panel"]} 60%);
+    }}
+
+    .play-card.skip {{
+        border-left: 4px solid {TOKENS["red"]};
+        background: linear-gradient(90deg, {TOKENS["red_bg"]}55 0%, {TOKENS["bg_panel"]} 60%);
+        opacity: 0.85;
+    }}
+
+    .play-card.anchor {{
+        border-left: 4px solid {TOKENS["blue"]};
+    }}
+
+    /* Status badges */
+    .badge {{
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 4px;
+        font-size: 11px;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.05em;
-        display: inline-block;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    }
-    
-    .badge-success { 
-        background: linear-gradient(135deg, rgba(0, 229, 255, 0.2) 0%, rgba(0, 229, 255, 0.1) 100%);
-        color: #00E5FF;
-        border: 1px solid rgba(0, 229, 255, 0.4);
-        box-shadow: 0 0 20px rgba(0, 229, 255, 0.2);
-    }
-    
-    .badge-danger { 
-        background: linear-gradient(135deg, rgba(255, 46, 99, 0.2) 0%, rgba(255, 46, 99, 0.1) 100%);
-        color: #FF2E63;
-        border: 1px solid rgba(255, 46, 99, 0.4);
-        box-shadow: 0 0 20px rgba(255, 46, 99, 0.2);
-    }
-    
-    .badge-neutral { 
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 100%);
-        color: #E0E0E0;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-    
-    /* ========== PREMIUM SCROLLBAR ========== */
-    ::-webkit-scrollbar {
-        width: 12px;
-        height: 12px;
-    }
-    
-    ::-webkit-scrollbar-track {
-        background: rgba(0, 0, 0, 0.3);
-    }
-    
-    ::-webkit-scrollbar-thumb {
-        background: linear-gradient(180deg, #00E5FF 0%, #8A2BE2 100%);
-        border-radius: 6px;
-        border: 2px solid rgba(0, 0, 0, 0.3);
-    }
-    
-    ::-webkit-scrollbar-thumb:hover {
-        background: linear-gradient(180deg, #00F5FF 0%, #9A3BF2 100%);
-        box-shadow: 0 0 10px rgba(0, 229, 255, 0.5);
-    }
-    
-    /* ========== PREMIUM ANIMATIONS ========== */
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(30px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-    
-    @keyframes pulse {
-        0%, 100% {
-            opacity: 1;
-        }
-        50% {
-            opacity: 0.7;
-        }
-    }
-    
-    @keyframes glow {
-        0%, 100% {
-            box-shadow: 0 0 20px rgba(0, 229, 255, 0.2);
-        }
-        50% {
-            box-shadow: 0 0 40px rgba(0, 229, 255, 0.4);
-        }
-    }
-    
-    /* ========== HIDE STREAMLIT BRANDING ========== */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
-    
-    /* ========== PREMIUM LOADING STATES ========== */
-    .stSpinner > div {
-        border-color: #00E5FF transparent transparent transparent !important;
-        animation: spin 1s linear infinite;
-    }
-    
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-    
-    /* ========== PREMIUM DIVIDERS ========== */
-    hr {
-        border: none;
-        height: 1px;
-        background: linear-gradient(90deg, 
-            transparent 0%, 
-            rgba(0, 229, 255, 0.5) 50%, 
-            transparent 100%);
-        margin: 2rem 0;
-    }
-    
-    /* ========== PREMIUM ALERTS ========== */
-    .stAlert {
-        border-radius: 16px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    }
+        font-family: 'Inter', sans-serif;
+    }}
+
+    .badge-best   {{ background: {TOKENS["green"]};      color: #001a08; }}
+    .badge-strong {{ background: {TOKENS["green_dim"]};  color: #ffffff; }}
+    .badge-play   {{ background: {TOKENS["green_bg"]};   color: {TOKENS["green"]};   border: 1px solid {TOKENS["green"]}; }}
+    .badge-value  {{ background: {TOKENS["amber"]};      color: #1a0e00; }}
+    .badge-lean   {{ background: {TOKENS["amber_bg"]};   color: {TOKENS["amber"]};   border: 1px solid {TOKENS["amber"]}; }}
+    .badge-skip   {{ background: {TOKENS["red"]};        color: #1a0506; }}
+    .badge-trap   {{ background: {TOKENS["red_bg"]};     color: {TOKENS["red"]};     border: 1px solid {TOKENS["red"]}; }}
+    .badge-anchor {{ background: {TOKENS["blue"]};       color: #001633; }}
+    .badge-info   {{ background: {TOKENS["bg_panel_2"]}; color: {TOKENS["text_muted"]}; border: 1px solid {TOKENS["border"]}; }}
+    .badge-tier1  {{ background: {TOKENS["green"]};      color: #001a08; }}
+    .badge-tier2  {{ background: {TOKENS["green_dim"]};  color: #ffffff; }}
+    .badge-tier3  {{ background: {TOKENS["amber"]};      color: #1a0e00; }}
+    .badge-tier4  {{ background: {TOKENS["amber_bg"]};   color: {TOKENS["amber"]};   border: 1px solid {TOKENS["amber"]}; }}
+    .badge-avoid  {{ background: {TOKENS["red"]};        color: #1a0506; }}
+
+    .odds-plus   {{ color: {TOKENS["green"]} !important; font-weight: 700; font-family: 'JetBrains Mono', monospace; }}
+    .odds-minus  {{ color: {TOKENS["red"]}   !important; font-weight: 700; font-family: 'JetBrains Mono', monospace; }}
+
+    .mono {{ font-family: 'JetBrains Mono', monospace; }}
+
+    /* Game header */
+    .game-header {{
+        background: {TOKENS["bg_panel_2"]};
+        border-radius: 8px 8px 0 0;
+        padding: 12px 18px;
+        border-bottom: 1px solid {TOKENS["border"]};
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }}
+
+    .game-time {{
+        color: {TOKENS["text_muted"]};
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 13px;
+    }}
+
+    /* Edge indicators */
+    .edge-positive {{ color: {TOKENS["green"]}; font-weight: 700; }}
+    .edge-neutral  {{ color: {TOKENS["amber"]}; font-weight: 700; }}
+    .edge-negative {{ color: {TOKENS["red"]};   font-weight: 700; }}
+
+    /* Slip card */
+    .slip-card {{
+        background: {TOKENS["bg_panel"]};
+        border: 1px solid {TOKENS["border"]};
+        border-radius: 12px;
+        padding: 20px;
+        margin: 16px 0;
+    }}
+
+    .slip-header-anchor      {{ background: linear-gradient(90deg, {TOKENS["blue"]} 0%, {TOKENS["blue_bg"]} 100%); }}
+    .slip-header-best        {{ background: linear-gradient(90deg, {TOKENS["green"]} 0%, {TOKENS["green_bg"]} 100%); }}
+    .slip-header-value       {{ background: linear-gradient(90deg, {TOKENS["amber"]} 0%, {TOKENS["amber_bg"]} 100%); }}
+    .slip-header-swing       {{ background: linear-gradient(90deg, {TOKENS["amber"]} 0%, {TOKENS["red_bg"]} 100%); }}
+    .slip-header-cross       {{ background: linear-gradient(90deg, {TOKENS["purple"]} 0%, {TOKENS["bg_panel_2"]} 100%); }}
+
+    .slip-header {{
+        color: white;
+        padding: 14px 20px;
+        border-radius: 10px 10px 0 0;
+        font-weight: 700;
+        margin: 0 -20px -20px -20px;
+        margin-bottom: 16px;
+    }}
+
+    /* Hide Streamlit branding */
+    [data-testid="stStatusWidget"], [data-testid="stToolbar"] {{
+        display: none !important;
+    }}
+
+    footer {{ display: none !important; }}
+
+    #MainMenu {{ visibility: hidden; }}
+
+    /* Tighten vertical spacing */
+    [data-testid="stVerticalBlock"] > [data-testid="element-container"] {{
+        margin-bottom: 0.5rem;
+    }}
 </style>
 """, unsafe_allow_html=True)
 
 
+# ── Helper renderers used by pages ────────────────────────────
+def status_badge(status: str) -> str:
+    """Render a status as a colored badge HTML span."""
+    s = str(status).upper()
+    cls_map = {
+        "BEST VALUE":   "badge-best",
+        "BEST ANCHOR":  "badge-best",
+        "STRONG":       "badge-strong",
+        "PLAY":         "badge-play",
+        "VALUE":        "badge-value",
+        "SWING VALUE":  "badge-value",
+        "LEAN":         "badge-lean",
+        "ANCHOR":       "badge-anchor",
+        "SGP ONLY":     "badge-anchor",
+        "PARLAY ONLY":  "badge-anchor",
+        "SKIP":         "badge-skip",
+        "CUT":          "badge-skip",
+        "TRAP":         "badge-trap",
+        "INFO":         "badge-info",
+    }
+    cls = "badge-info"
+    for key, c in cls_map.items():
+        if key in s:
+            cls = c
+            break
+    return f'<span class="badge {cls}">{status}</span>'
+
+
+def odds_html(odds) -> str:
+    """Render American odds with color coding."""
+    if odds is None or odds == "":
+        return '<span class="mono" style="color:#6E7681">—</span>'
+    try:
+        v = int(odds)
+        if v > 0:
+            return f'<span class="odds-plus">+{v}</span>'
+        else:
+            return f'<span class="odds-minus">{v}</span>'
+    except Exception:
+        # String odds like "~+120" or "✅ -132"
+        s = str(odds)
+        if "+" in s.split("(")[0]:
+            return f'<span class="odds-plus">{s}</span>'
+        if "-" in s.split("(")[0]:
+            return f'<span class="odds-minus">{s}</span>'
+        return f'<span class="mono">{s}</span>'
+
+
+def edge_html(edge_pct: float) -> str:
+    """Render edge percentage with color."""
+    if edge_pct is None:
+        return '—'
+    cls = "edge-positive" if edge_pct >= 2 else ("edge-neutral" if edge_pct > 0 else "edge-negative")
+    sign = "+" if edge_pct >= 0 else ""
+    return f'<span class="{cls}">{sign}{edge_pct:.1f}%</span>'
+
+
+def tier_badge(tier: str) -> str:
+    """Pitcher tier badge."""
+    t = str(tier).upper()
+    if "TIER 1" in t:  return f'<span class="badge badge-tier1">{tier}</span>'
+    if "TIER 2" in t:  return f'<span class="badge badge-tier2">{tier}</span>'
+    if "TIER 3" in t:  return f'<span class="badge badge-tier3">{tier}</span>'
+    if "TIER 4" in t:  return f'<span class="badge badge-tier4">{tier}</span>'
+    if "AVOID" in t:   return f'<span class="badge badge-avoid">{tier}</span>'
+    return f'<span class="badge badge-info">{tier}</span>'
+
+
+# Backwards-compat alias
+apply_theme = apply_premium_theme

@@ -98,43 +98,88 @@ def decode_html_entities(text):
     except Exception:
         return str(text)
 
-def render_prop_card_header(player_name, team, opponent, game_time, image_url=None):
+def render_player_prop_card(player_name, team, opponent, game_time, prop_type, line, over_odds, under_odds, model_proj, edge_pct, image_url=None):
     """
-    Renders the top part of a prop card
+    Renders a modern, PrizePicks-style player prop card.
     """
-    # First decode HTML entities, then escape for safe display
-    player_name_decoded = decode_html_entities(player_name)
-    team_decoded = decode_html_entities(team)
-    opponent_decoded = decode_html_entities(opponent)
+    # Safe decoding
+    player_name = decode_html_entities(player_name)
+    team = decode_html_entities(team)
+    opponent = decode_html_entities(opponent)
     
-    player_name_escaped = html.escape(str(player_name_decoded))
-    team_escaped = html.escape(str(team_decoded))
-    opponent_escaped = html.escape(str(opponent_decoded))
-    game_time_escaped = html.escape(str(game_time))
+    # Escape for HTML
+    player_name_esc = html.escape(str(player_name))
+    team_esc = html.escape(str(team))
+    opponent_esc = html.escape(str(opponent))
+    game_time_esc = html.escape(str(game_time))
+    prop_type_esc = html.escape(str(prop_type).upper())
     
-    # Safe initial extraction from decoded name
-    initial = str(player_name_decoded)[0] if player_name_decoded and len(str(player_name_decoded)) > 0 else "?"
-    initial_escaped = html.escape(initial)
+    # Format odds
+    over_str = f"+{over_odds}" if over_odds > 0 else str(over_odds)
+    under_str = f"+{under_odds}" if under_odds > 0 else str(under_odds)
     
+    # Edge formatting
+    edge_color = "#10b981" if edge_pct > 0 else "#ef4444"
+    edge_str = f"+{edge_pct:.1f}%" if edge_pct > 0 else f"{edge_pct:.1f}%"
+    
+    # Avatar
+    initial = str(player_name)[0] if player_name else "?"
     if image_url:
-        # Escape image URL but keep it as a valid URL
-        image_url_escaped = html.escape(str(image_url))
-        # Use onerror to fallback to initials if image fails to load
-        img_html = f'<img src="{image_url_escaped}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid #333; display: block;" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'flex\';">'
-        fallback_html = f'<div style="width: 40px; height: 40px; background: #222; border-radius: 50%; display: none; align-items: center; justify-content: center; font-weight: bold; color: #CCCCCC;">{initial_escaped}</div>'
-        avatar_html = f'{img_html}{fallback_html}'
+        image_url_esc = html.escape(str(image_url))
+        avatar_html = f'<img src="{image_url_esc}" style="width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 2px solid #262626;" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'flex\';">'
+        fallback_html = f'<div style="width: 56px; height: 56px; background: #262626; border-radius: 50%; display: none; align-items: center; justify-content: center; font-weight: 700; color: #a3a3a3; font-size: 20px;">{initial}</div>'
+        avatar = avatar_html + fallback_html
     else:
-        avatar_html = f'<div style="width: 40px; height: 40px; background: #222; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #CCCCCC;">{initial_escaped}</div>'
+        avatar = f'<div style="width: 56px; height: 56px; background: #262626; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #a3a3a3; font-size: 20px;">{initial}</div>'
 
-    return f"""<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-<div style="display: flex; align-items: center; gap: 12px;">
-{avatar_html}
-<div>
-<div style="font-weight: 700; font-size: 1.1rem; color: #FFF;">{player_name_escaped}</div>
-<div style="font-size: 0.8rem; color: #CCCCCC;">{team_escaped} vs {opponent_escaped} • {game_time_escaped}</div>
-</div>
-</div>
-</div>"""
+    html_content = f"""
+    <div style="background: #121212; border: 1px solid #262626; border-radius: 16px; padding: 16px; margin-bottom: 16px; transition: transform 0.2s, border-color 0.2s; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);">
+        <!-- Header: Avatar + Info + Edge -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+            <div style="display: flex; gap: 12px; align-items: center;">
+                {avatar}
+                <div>
+                    <div style="font-family: 'Inter', sans-serif; font-weight: 700; font-size: 18px; color: #ffffff; letter-spacing: -0.02em;">{player_name_esc}</div>
+                    <div style="font-family: 'Inter', sans-serif; font-size: 13px; color: #a3a3a3; margin-top: 2px;">
+                        <span style="font-weight: 600; color: #d4d4d8;">{team_esc}</span> vs {opponent_esc} • {game_time_esc}
+                    </div>
+                </div>
+            </div>
+            <div style="text-align: right;">
+                <div style="font-size: 11px; font-weight: 700; color: #737373; text-transform: uppercase; letter-spacing: 0.5px;">Model Edge</div>
+                <div style="font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 800; color: {edge_color};">{edge_str}</div>
+            </div>
+        </div>
+        
+        <!-- Main Content: Prop Line & Projections -->
+        <div style="background: #0a0a0a; border-radius: 12px; padding: 16px; display: flex; align-items: center; justify-content: space-between; border: 1px solid #1f1f1f;">
+            <div style="text-align: center; flex: 1;">
+                <div style="font-size: 12px; color: #737373; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">{prop_type_esc}</div>
+                <div style="font-family: 'JetBrains Mono', monospace; font-size: 28px; font-weight: 800; color: #ffffff;">{line}</div>
+            </div>
+            
+            <div style="width: 1px; height: 40px; background: #262626; margin: 0 16px;"></div>
+            
+            <div style="text-align: center; flex: 1;">
+                <div style="font-size: 11px; color: #737373; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Model Proj</div>
+                <div style="font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 700; color: #3b82f6;">{model_proj:.1f}</div>
+            </div>
+        </div>
+        
+        <!-- Odds Buttons -->
+        <div style="display: flex; gap: 8px; margin-top: 12px;">
+            <div style="flex: 1; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 10px; text-align: center; cursor: pointer;">
+                <div style="font-size: 12px; font-weight: 700; color: #10b981; text-transform: uppercase;">Over</div>
+                <div style="font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 700; color: #ffffff; margin-top: 2px;">{over_str}</div>
+            </div>
+            <div style="flex: 1; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 10px; text-align: center; cursor: pointer;">
+                <div style="font-size: 12px; font-weight: 700; color: #ef4444; text-transform: uppercase;">Under</div>
+                <div style="font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 700; color: #ffffff; margin-top: 2px;">{under_str}</div>
+            </div>
+        </div>
+    </div>
+    """
+    return html_content
 
 def render_edge_meter(edge_pct):
     """
@@ -225,7 +270,7 @@ def render_bet_slip(legs):
 </div>"""
         st.markdown(total_odds_html, unsafe_allow_html=True)
         
-        st.button("🚀 PLACE BET (Simulated)", use_container_width=True)
+        st.button("🚀 PLACE BET (Simulated)", width="stretch")
 
 def format_game_time(start_time_str):
     """
