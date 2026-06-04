@@ -1,47 +1,89 @@
 """
-Database client
-===============
-Reads credentials in priority order:
-  1. Streamlit secrets  (st.secrets)  — Streamlit Cloud deployment
-  2. Environment / .env               — local development
-  3. Falls back to local SQLite       — if neither is configured
+Database client — lazy Supabase initialization.
+
+Credential resolution order:
+  1. Streamlit secrets (st.secrets)  — Streamlit Cloud
+  2. Environment variables / .env    — local development
+  3. Local SQLite fallback           — if neither configured
 """
 import os
 from dotenv import load_dotenv
-
 load_dotenv()
 
+# ── Lazy client wrapper ──────────────────────────────────────
+# We delay reading st.secrets until the first DB call so that
+# the Streamlit runtime is guaranteed to be fully initialized.
 
-def _get(key: str) -> str:
-    """Read a secret from st.secrets first, then os.environ."""
-    # Try Streamlit secrets (works on Streamlit Cloud and locally with secrets.toml)
+_client = None
+_db_mode = None
+
+
+def _resolve(key: str) -> str:
+    """Read a key from st.secrets → os.environ, in that order."""
+    # Streamlit secrets (works on Streamlit Cloud and locally with secrets.toml)
     try:
         import streamlit as st
-        val = st.secrets.get(key, "")
-        if val:
-            return str(val)
+        # Use dict-style access first (works when the key exists)
+        if hasattr(st, "secrets"):
+            try:
+                return str(st.secrets[key])
+            except KeyError:
+                pass
+            # Fallback to .get() in case of different Streamlit version
+            val = st.secrets.get(key, "")
+            if val:
+                return str(val)
     except Exception:
         pass
-    # Fallback to environment variable / .env
+    # Environment variable / .env
     return os.getenv(key, "")
 
 
-SUPABASE_URL = _get("SUPABASE_URL")
-SUPABASE_KEY = _get("SUPABASE_KEY")
-DB_MODE      = "sqlite"   # overwritten below if Supabase connects
+def _init():
+    global _client, _db_mode
+    if _client is not None:
+        return
 
-if SUPABASE_URL and SUPABASE_KEY:
-    try:
-        from supabase import create_client, Client
-        supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-        DB_MODE = "supabase"
-        print(f"[db] Using supabase backend ({SUPABASE_URL[:40]}...)")
-    except Exception as e:
-        print(f"[db] Supabase init failed ({e}), falling back to SQLite")
-        from services.local_db import LocalDB
-        supabase = LocalDB()
-else:
-    print("[db] No Supabase credentials found — using local SQLite fallback")
+    url = _resolve("SUPABASE_URL")
+    key = _resolve("SUPABASE_KEY")
+
+    if url and key:
+        try:
+            from supabase import create_client
+            _client  = create_client(url, key)
+            _db_mode = "supabase"
+            print(f"[db] ✓ Supabase connected ({url[:45]}...)")
+            return
+        except Exception as e:
+            print(f"[db] ✗ Supabase init failed: {e}")
+
+    print("[db] ✗ No Supabase credentials — using SQLite fallback")
     from services.local_db import LocalDB
-    supabase = LocalDB()
-    DB_MODE = "sqlite"
+    _client  = LocalDB()
+    _db_mode = "sqlite"
+
+
+class _LazyDB:
+    """Proxy that initialises the real client on first use."""
+
+    def __getattr__(self, name):
+        _init()
+        return getattr(_client, name)
+
+    def table(self, *args, **kwargs):
+        _init()
+        return _client.table(*args, **kwargs)
+
+
+supabase = _LazyDB()
+
+
+def get_db_mode() -> str:
+    _init()
+    return _db_mode or "unknown"
+
+
+# Legacy alias used in some pages
+@property
+def DB_MODE():
+    return get_db_mode()
