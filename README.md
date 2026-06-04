@@ -83,8 +83,16 @@ Or execute the SQL commands from `schema.sql` in your Supabase dashboard.
 ### 5. Run the Dashboard
 
 ```bash
-streamlit run dashboard/app.py
+streamlit run dashboard/main.py
 ```
+
+### 6. Access on Phone (Same Wi-Fi)
+
+```bash
+streamlit run dashboard/main.py --server.address 0.0.0.0 --server.port 8501
+```
+
+Then open `http://YOUR_COMPUTER_IP:8501` on your phone browser.
 
 ## Project Structure
 

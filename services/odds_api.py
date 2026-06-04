@@ -38,7 +38,7 @@ def get_events(sport_key):
         return []
 
 
-def get_player_props(sport_key, regions="us", odds_format="american"):
+def get_player_props(sport_key, regions="us", odds_format="american", markets_override: str | None = None):
     """
     Get player prop odds from The Odds API v4.
     Player props are non-featured markets and must be fetched per event using /events/{eventId}/odds
@@ -53,12 +53,17 @@ def get_player_props(sport_key, regions="us", odds_format="american"):
     """
     # For NBA, use specific player prop markets
     # Note: player_pra is not a valid market in v4 API - it must be calculated from points+rebounds+assists
-    if sport_key == "basketball_nba":
+    if markets_override:
+        markets = markets_override
+    elif sport_key == "basketball_nba":
         markets = "player_points,player_rebounds,player_assists,player_threes,player_steals,player_blocks,player_turnovers"
+    elif sport_key == "baseball_mlb":
+        # Includes alt-line style outcomes where offered by books.
+        markets = "batter_hits,batter_total_bases,batter_home_runs,batter_rbis,batter_runs_scored,batter_strikeouts,pitcher_strikeouts,pitcher_hits_allowed,pitcher_walks,pitcher_outs"
     elif sport_key == "americanfootball_nfl":
         markets = "player_pass_tds,player_pass_yds,player_pass_completions,player_rush_yds,player_rush_attempts,player_receptions,player_reception_yds,player_anytime_td"
     else:
-        markets = "player_props"
+        markets = "player_points,player_rebounds,player_assists"
     
     # First, get list of events
     print("Fetching events...")

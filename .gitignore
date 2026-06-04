@@ -113,3 +113,11 @@ local_config.py
 # portfolio/sports_betting_images/
 # portfolio/colorspark_images/
 
+
+.streamlit/secrets.toml
+.env
+*.log
+__pycache__/
+*.pyc
+.DS_Store
+

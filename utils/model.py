@@ -499,8 +499,23 @@ def build_game_model(
     home_k9: Optional[float] = None,
     away_xera: Optional[float] = None,
     home_xera: Optional[float] = None,
+    use_elo_seeds: bool = True,
 ) -> GameModel:
-    """One-call convenience to build and run a GameModel."""
+    """
+    One-call convenience to build and run a GameModel.
+    If use_elo_seeds=True, loads real team Elo from standings automatically.
+    """
+    # Auto-load real Elo seeds from standings if at default
+    if use_elo_seeds and (away_elo == ELO_DEFAULT or home_elo == ELO_DEFAULT):
+        try:
+            from utils.elo_seeds import lookup_elo
+            if away_elo == ELO_DEFAULT:
+                away_elo = lookup_elo(away_team)
+            if home_elo == ELO_DEFAULT:
+                home_elo = lookup_elo(home_team)
+        except Exception:
+            pass  # fall back to 1500 silently
+
     away_p = PitcherProfile(
         name=away_pitcher_name, team=away_team,
         fip=away_fip, xera=away_xera, k9=away_k9

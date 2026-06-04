@@ -23,13 +23,12 @@ from services.odds_api import get_odds_for_sport, get_events
 
 # The Odds API sport keys → display names
 SPORT_KEYS = {
-    "basketball_nba":       "NBA",
-    "baseball_mlb":         "MLB",
-    "icehockey_nhl":        "NHL",
-    "americanfootball_nfl": "NFL",
-    "golf_pga_championship":"PGA",
-    "golf_the_masters":     "PGA",
-    "golf_us_open":         "PGA",
+    "basketball_nba":                   "NBA",
+    "baseball_mlb":                     "MLB",
+    "icehockey_nhl":                    "NHL",
+    "americanfootball_nfl":             "NFL",
+    "golf_the_open_championship_winner":"PGA",
+    "golf_us_open_winner":              "PGA",
 }
 
 MARKET_MAP = {
@@ -37,7 +36,7 @@ MARKET_MAP = {
     "MLB": "h2h,spreads,totals",
     "NHL": "h2h,spreads,totals",
     "NFL": "h2h,spreads,totals",
-    "PGA": "h2h",
+    "PGA": "outrights",   # golf uses outrights (tournament winner), not h2h
 }
 
 # Free tier: 500 req/month (~16/day). Each sport fetch = 1 credit.
@@ -74,8 +73,9 @@ def fetch_sport(sport_key: str, display_name: str):
 
     for game in games_data:
         external_id = game.get("id")
-        home_team   = game.get("home_team", "")
-        away_team   = game.get("away_team", "")
+        # Golf outrights: home_team is the tournament title, away_team = sport_key label
+        home_team   = game.get("home_team") or game.get("sport_title", sport_key)
+        away_team   = game.get("away_team") or game.get("sport_title", sport_key)
         start_time  = game.get("commence_time", "")
 
         # Upsert game record

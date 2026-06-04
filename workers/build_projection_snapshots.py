@@ -150,7 +150,7 @@ def build_snapshots(args: argparse.Namespace) -> None:
             "injury_status": projection.get("injury_status"),
             "rest_days": factors.get("rest_days"),
             "source_prop_id": prop.get("id"),
-            "snapshot_version": "v1",
+            "snapshot_version": "v2",
             "snapshot_at": now_iso,
             "created_at": now_iso,
             "updated_at": now_iso,

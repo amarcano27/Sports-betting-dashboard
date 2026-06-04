@@ -166,7 +166,11 @@ def get_projection_snapshots_map(
         )
         if prop_filter:
             query = query.in_("prop_type", list(prop_filter))
-        resp = query.execute()
+        try:
+            resp = query.execute()
+        except Exception:
+            # Projection snapshots table may be absent in some deployments.
+            return {}
         for row in resp.data or []:
             game_id = row.get("game_id")
             prop_type = row.get("prop_type")

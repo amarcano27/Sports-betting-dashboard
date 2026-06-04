@@ -253,14 +253,21 @@ def fetch_mlb():
             if player.get("position") in ("P", "SP", "RP"):
                 logs = mlb_get_pitcher_gamelog(pid_ext, last_n=10)
                 for log in logs:
+                    # IP like "6.2" means 6 innings + 2 outs → store as int outs (6*3+2=20)
+                    ip_raw = log.get("ip", "0")
+                    try:
+                        ip_parts = str(ip_raw).split(".")
+                        ip_int   = int(ip_parts[0]) * 3 + (int(ip_parts[1]) if len(ip_parts) > 1 else 0)
+                    except Exception:
+                        ip_int = 0
                     upsert_stats(db_id, None, {
-                        "date":     log["date"],
-                        "opponent": log["opponent"],
-                        "home":     True,
-                        "points":   log.get("k", 0),       # K = "points" proxy for pitchers
-                        "assists":  log.get("ip", 0),      # IP = assists proxy
-                        "turnovers": log.get("bb", 0),     # BB = turnovers proxy
-                        "blocks":   log.get("er", 0),      # ER = blocks proxy
+                        "date":      log["date"],
+                        "opponent":  log["opponent"],
+                        "home":      True,
+                        "points":    int(log.get("k", 0)),    # K = "points" proxy
+                        "assists":   ip_int,                  # IP outs = assists proxy
+                        "turnovers": int(log.get("bb", 0)),   # BB = turnovers
+                        "blocks":    int(log.get("er", 0)),   # ER = blocks
                     })
             else:
                 logs = mlb_get_batter_gamelog(pid_ext, last_n=LAST_N_GAMES)

@@ -8,5 +8,5 @@ echo Starting Auto-Refresh Scheduler...
 start "Dashboard Scheduler" /MIN python scheduler.py
 
 echo Starting Streamlit...
-streamlit run dashboard/main.py
+streamlit run dashboard/main.py --server.address 0.0.0.0 --server.port 8501
 pause

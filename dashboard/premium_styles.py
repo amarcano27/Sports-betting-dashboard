@@ -223,10 +223,9 @@ def apply_premium_theme():
         overflow: hidden;
     }}
 
-    /* ── Hide Streamlit Branding ───────────────────────── */
-    [data-testid="stStatusWidget"], [data-testid="stToolbar"] {{ display: none !important; }}
+    /* ── Hide Streamlit Branding (keep header/toolbar for page nav) ── */
+    [data-testid="stStatusWidget"] {{ display: none !important; }}
     footer {{ display: none !important; }}
-    #MainMenu {{ visibility: hidden; }}
 
     /* ── Custom Apex Classes ───────────────────────────── */
     .apex-card {{
@@ -278,6 +277,115 @@ def apply_premium_theme():
     .badge-red   {{ background: {TOKENS["red_bg"]};   color: {TOKENS["red"]};   border: 1px solid {TOKENS["red_glow"]}; }}
     .badge-amber {{ background: {TOKENS["amber_bg"]}; color: {TOKENS["amber"]}; border: 1px solid {TOKENS["amber_glow"]}; }}
     .badge-cyan  {{ background: {TOKENS["cyan_bg"]};  color: {TOKENS["cyan"]};  border: 1px solid {TOKENS["cyan_glow"]}; }}
+
+    /* ── Top navigation (phone-friendly) ───────────────── */
+    header[data-testid="stHeader"] {{
+        background: {TOKENS["bg_panel"]} !important;
+        border-bottom: 1px solid {TOKENS["border"]} !important;
+    }}
+
+    [data-testid="stSidebarNav"] {{
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }}
+
+    /* ── Mobile Responsiveness ─────────────────────────── */
+    @media (max-width: 900px) {{
+        [data-testid="stMain"], .main .block-container {{
+            padding-top: 0.5rem !important;
+            padding-left: 0.65rem !important;
+            padding-right: 0.65rem !important;
+            max-width: 100% !important;
+        }}
+
+        h1 {{ font-size: 1.35rem !important; line-height: 1.2 !important; }}
+        h2 {{ font-size: 1.1rem !important; }}
+        h3 {{ font-size: 1rem !important; }}
+
+        .apex-card {{
+            padding: 12px !important;
+            border-radius: 12px !important;
+            margin-bottom: 12px !important;
+        }}
+
+        .apex-card:hover {{
+            transform: none !important;
+        }}
+
+        /* Stack page content columns only (do NOT touch header/nav rows) */
+        [data-testid="stMain"] div[data-testid="stHorizontalBlock"] {{
+            flex-direction: column !important;
+            gap: 0.5rem !important;
+            width: 100% !important;
+        }}
+
+        [data-testid="stMain"] div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {{
+            width: 100% !important;
+            min-width: 100% !important;
+            flex: 1 1 auto !important;
+        }}
+
+        header[data-testid="stHeader"] div[data-testid="stHorizontalBlock"],
+        [data-testid="stSidebarNav"] div[data-testid="stHorizontalBlock"] {{
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch;
+        }}
+
+        .stButton > button {{
+            width: 100% !important;
+            font-size: 12px !important;
+            padding: 0.5rem 0.75rem !important;
+            letter-spacing: 0.02em !important;
+        }}
+
+        [data-testid="stMetric"] {{
+            padding: 10px !important;
+        }}
+
+        [data-testid="stMetricValue"] {{
+            font-size: 1.25rem !important;
+        }}
+
+        /* Scroll wide tables instead of crushing layout */
+        [data-testid="stDataFrame"], [data-testid="stDataFrame"] > div {{
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch;
+        }}
+
+        /* Top nav tabs: horizontal scroll, readable tap targets */
+        [data-testid="stSidebarNav"] a,
+        nav a {{
+            font-size: 13px !important;
+            padding: 8px 12px !important;
+            white-space: nowrap !important;
+        }}
+
+        /* Game / prop cards: smaller type, stack footer */
+        .apex-card .apex-card-body-row {{
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 8px !important;
+        }}
+
+        .apex-card .apex-team-row {{
+            font-size: 16px !important;
+        }}
+
+        .apex-card .apex-odds-mono {{
+            font-size: 15px !important;
+        }}
+
+        .apex-card .apex-line-proj-row {{
+            flex-direction: column !important;
+            gap: 10px !important;
+        }}
+
+        .apex-card .apex-line-proj-row > div[style*="width: 1px"] {{
+            display: none !important;
+        }}
+    }}
 
 </style>
 """, unsafe_allow_html=True)

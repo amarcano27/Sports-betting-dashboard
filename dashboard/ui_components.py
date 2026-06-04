@@ -37,11 +37,11 @@ def render_metric_card(label: str, value: str, delta: str = None, color_type: st
         delta_html = f'<div style="color: {d_color}; font-size: 13px; font-weight: 700; margin-top: 4px; font-family: \'JetBrains Mono\', monospace;">{html.escape(str(delta))}</div>'
 
     html_content = f"""
-    <div class="apex-card" style="padding: 16px;">
+    <div class="apex-card apex-metric-card" style="padding: 16px;">
         <div style="color: {TOKENS['text_muted']}; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px;">
             {html.escape(label)}
         </div>
-        <div style="color: {main_color}; font-size: 28px; font-weight: 800; font-family: 'JetBrains Mono', monospace; line-height: 1.1;">
+        <div class="apex-odds-mono" style="color: {main_color}; font-size: 28px; font-weight: 800; font-family: 'JetBrains Mono', monospace; line-height: 1.1;">
             {html.escape(str(value))}
         </div>
         {delta_html}
@@ -106,10 +106,10 @@ def render_prop_card(player_name, team, opponent, game_time, prop_type, line, ov
             </div>
         </div>
         <!-- Line & Projection -->
-        <div style="background: {TOKENS['bg_main']}; border-radius: 8px; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; border: 1px solid {TOKENS['border']}; margin-bottom: 12px;">
+        <div class="apex-line-proj-row" style="background: {TOKENS['bg_main']}; border-radius: 8px; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; border: 1px solid {TOKENS['border']}; margin-bottom: 12px;">
             <div style="text-align: center; flex: 1;">
                 <div style="font-size: 11px; color: {TOKENS['text_muted']}; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">{p_type}</div>
-                <div style="font-family: 'JetBrains Mono', monospace; font-size: 24px; font-weight: 800; color: {TOKENS['text_primary']};">{line}</div>
+                <div class="apex-odds-mono" style="font-family: 'JetBrains Mono', monospace; font-size: 24px; font-weight: 800; color: {TOKENS['text_primary']};">{line}</div>
             </div>
             <div style="width: 1px; height: 30px; background: {TOKENS['border']}; margin: 0 12px;"></div>
             <div style="text-align: center; flex: 1;">
@@ -132,7 +132,20 @@ def render_prop_card(player_name, team, opponent, game_time, prop_type, line, ov
     """
     st.markdown(card_html.replace('\n', ''), unsafe_allow_html=True)
 
-def render_game_card(sport, away_team, home_team, time_str, away_ml, home_ml, edge_pct, recommendation, model_prob, market_prob):
+def render_game_card(
+    sport,
+    away_team,
+    home_team,
+    time_str,
+    away_ml,
+    home_ml,
+    edge_pct,
+    recommendation,
+    model_prob,
+    market_prob,
+    value_target=None,
+    value_odds=None,
+):
     """Render the ultimate game analysis card."""
     a_ml_str = format_odds(away_ml)
     h_ml_str = format_odds(home_ml)
@@ -145,6 +158,16 @@ def render_game_card(sport, away_team, home_team, time_str, away_ml, home_ml, ed
     
     edge_color = TOKENS["green"] if edge_pct > 0 else TOKENS["red"]
     
+    value_text = ""
+    if value_target:
+        value_odds_str = format_odds(value_odds) if value_odds is not None else "—"
+        value_text = (
+            f"<div style='font-size: 11px; color: {TOKENS['text_secondary']}; font-weight: 700; margin-top: 6px;'>"
+            f"Best Value: <span style='color:{TOKENS['text_primary']}'>{value_target}</span> "
+            f"(<span style='font-family: JetBrains Mono, monospace;'>{value_odds_str}</span>)"
+            f"</div>"
+        )
+
     html_content = f"""
     <div class="apex-card" style="padding: 0; margin-bottom: 20px;">
         <!-- Header -->
@@ -155,17 +178,17 @@ def render_game_card(sport, away_team, home_team, time_str, away_ml, home_ml, ed
             <div class="badge {badge_class}">{recommendation}</div>
         </div>
         <!-- Body -->
-        <div style="padding: 20px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <div style="padding: 16px;">
+            <div class="apex-team-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 8px; flex-wrap: wrap;">
                 <div style="font-size: 20px; font-weight: 800; color: {TOKENS['text_primary']};">{away_team}</div>
-                <div style="font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 800; color: {TOKENS['text_secondary']};">{a_ml_str}</div>
+                <div class="apex-odds-mono" style="font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 800; color: {TOKENS['text_secondary']};">{a_ml_str}</div>
             </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <div class="apex-team-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; gap: 8px; flex-wrap: wrap;">
                 <div style="font-size: 20px; font-weight: 800; color: {TOKENS['text_primary']};">@ {home_team}</div>
-                <div style="font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 800; color: {TOKENS['text_secondary']};">{h_ml_str}</div>
+                <div class="apex-odds-mono" style="font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 800; color: {TOKENS['text_secondary']};">{h_ml_str}</div>
             </div>
             <!-- Analysis Footer -->
-            <div style="background: {TOKENS['bg_main']}; border-radius: 8px; padding: 12px; border: 1px solid {TOKENS['border']}; display: flex; justify-content: space-between; align-items: center;">
+            <div class="apex-card-body-row" style="background: {TOKENS['bg_main']}; border-radius: 8px; padding: 12px; border: 1px solid {TOKENS['border']}; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                 <div>
                     <div style="font-size: 11px; color: {TOKENS['text_muted']}; font-weight: 700; text-transform: uppercase;">Model vs Market</div>
                     <div style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: {TOKENS['text_secondary']}; margin-top: 2px;">
@@ -177,6 +200,7 @@ def render_game_card(sport, away_team, home_team, time_str, away_ml, home_ml, ed
                     <div style="font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 800; color: {edge_color};">
                         {'+' if edge_pct>0 else ''}{edge_pct:.1f}%
                     </div>
+                    {value_text}
                 </div>
             </div>
         </div>

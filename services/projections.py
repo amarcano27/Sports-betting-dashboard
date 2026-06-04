@@ -11,9 +11,78 @@ Projection Service - Calculate custom player prop lines based on:
 - Rest days and back-to-back games
 """
 from typing import Dict, List, Optional
-from collections import defaultdict
 from datetime import datetime, timedelta
 from services.db import supabase
+BOOK_WEIGHTS = {
+    "Pinnacle": 1.35,
+    "Bovada": 1.2,
+    "DraftKings": 1.1,
+    "FanDuel": 1.1,
+    "BetMGM": 1.0,
+    "Caesars": 1.0,
+    "bet365": 1.0,
+}
+
+
+def get_market_consensus_line(player_id: str, game_id: str, prop_type: str) -> Dict:
+    """
+    Build a weighted market consensus line from all available books.
+
+    Returns:
+        {
+            "line": float | None,
+            "books": int,
+            "book_list": [str],
+            "dispersion": float | None
+        }
+    """
+    try:
+        rows = (
+            supabase.table("player_prop_odds")
+            .select("line, book")
+            .eq("player_id", player_id)
+            .eq("game_id", game_id)
+            .eq("prop_type", prop_type)
+            .order("created_at", desc=True)
+            .limit(200)
+            .execute()
+            .data
+            or []
+        )
+    except Exception:
+        rows = []
+
+    by_book = {}
+    for r in rows:
+        line = r.get("line")
+        book = r.get("book")
+        if line is None or not book:
+            continue
+        if book not in by_book:
+            by_book[book] = float(line)
+
+    if not by_book:
+        return {"line": None, "books": 0, "book_list": [], "dispersion": None}
+
+    weighted_sum = 0.0
+    total_weight = 0.0
+    lines = []
+    for book, line in by_book.items():
+        weight = BOOK_WEIGHTS.get(book, 0.9)
+        weighted_sum += line * weight
+        total_weight += weight
+        lines.append(line)
+
+    consensus = weighted_sum / total_weight if total_weight > 0 else sum(lines) / len(lines)
+    dispersion = (max(lines) - min(lines)) if len(lines) > 1 else 0.0
+    return {
+        "line": round(consensus, 2),
+        "books": len(by_book),
+        "book_list": sorted(by_book.keys()),
+        "dispersion": round(dispersion, 2),
+    }
+
+
 
 
 def get_prop_value_from_stat(stat: Dict, prop_type: str) -> Optional[float]:
@@ -404,6 +473,11 @@ def calculate_projection(
     Returns empty dict on error to allow graceful degradation
     """
     try:
+        # Get market consensus and Bovada line baselines
+        market_consensus = {"line": None, "books": 0, "book_list": [], "dispersion": None}
+        if game_id:
+            market_consensus = get_market_consensus_line(player_id, game_id, prop_type)
+
         # Get Bovada line as baseline (if not provided, try to fetch it)
         if bovada_line is None and game_id:
             bovada_line = get_bovada_line(player_id, game_id, prop_type)
@@ -411,16 +485,31 @@ def calculate_projection(
         # Load recent stats
         recent_stats = load_player_recent_stats(player_id, prop_type, 15)
         
-        # Calculate player's recent average
+        # Calculate player's recent/season averages
         player_avg = calculate_weighted_average(recent_stats, prop_type, recency_weight=0.15) if recent_stats else None
+        season_stats = load_player_recent_stats(player_id, prop_type, 40)
+        season_avg = calculate_weighted_average(season_stats, prop_type, recency_weight=0.03) if season_stats else None
         
-        # Use Bovada line as baseline if available, otherwise use player average
-        if bovada_line is not None:
-            base_projection = bovada_line
+        # Build blended projection from multiple legit sources.
+        market_line = market_consensus.get("line")
+        if market_line is not None and player_avg is not None and season_avg is not None:
+            base_projection = (0.45 * player_avg) + (0.30 * season_avg) + (0.25 * float(market_line))
+            baseline_source = "blended_recent_season_market"
+        elif market_line is not None and player_avg is not None:
+            base_projection = (0.65 * player_avg) + (0.35 * float(market_line))
+            baseline_source = "blended_recent_market"
+        elif player_avg is not None and season_avg is not None:
+            base_projection = (0.70 * player_avg) + (0.30 * season_avg)
+            baseline_source = "blended_recent_season"
+        elif market_line is not None:
+            base_projection = float(market_line)
+            baseline_source = "market_consensus"
+        elif bovada_line is not None:
+            base_projection = float(bovada_line)
             baseline_source = "bovada"
         elif player_avg is not None:
-            base_projection = player_avg
-            baseline_source = "player_avg"
+            base_projection = float(player_avg)
+            baseline_source = "recent_avg"
         else:
             return {
                 "projected_line": None,
@@ -434,6 +523,11 @@ def calculate_projection(
             "baseline": base_projection,
             "baseline_source": baseline_source,
             "player_avg": player_avg or 0,
+            "season_avg": season_avg or 0,
+            "market_consensus_line": market_line,
+            "market_books": market_consensus.get("books"),
+            "market_book_list": market_consensus.get("book_list"),
+            "market_dispersion": market_consensus.get("dispersion"),
             "defense_adjustment": 1.0,
             "matchup_adjustment": 1.0,
             "home_away_adjustment": 1.0,
@@ -490,6 +584,10 @@ def calculate_projection(
         # Calculate confidence based on sample size and consistency
         sample_size = len(recent_stats)
         confidence = min(1.0, sample_size / 15.0)  # Max confidence at 15+ games
+        if market_consensus.get("books", 0) >= 3:
+            confidence = min(1.0, confidence + 0.08)
+        if market_consensus.get("dispersion") is not None and market_consensus["dispersion"] > 3.5:
+            confidence *= 0.9
         
         # Reduce confidence if stats are inconsistent (high variance)
         if sample_size >= 5:
@@ -510,7 +608,9 @@ def calculate_projection(
             "sample_size": sample_size,
             "injury_status": injury_status["status"],
             "baseline_source": baseline_source,
-            "bovada_line": bovada_line
+            "bovada_line": bovada_line,
+            "market_consensus_line": market_line,
+            "market_books": market_consensus.get("books"),
         }
     except Exception as e:
         # Gracefully handle errors - return empty dict so UI doesn't break

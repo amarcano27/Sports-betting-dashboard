@@ -11,6 +11,7 @@ import sys
 from pathlib import Path
 from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional, Tuple
+import re
 
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
@@ -23,7 +24,7 @@ from services.data_cache import (
 )
 from services.db import supabase
 from services.line_helpers import adjust_for_dfs_line, get_scraped_dfs_line
-from services.projections import get_prop_value_from_stat
+from services.projections import get_prop_value_from_stat, calculate_projection
 from utils.ev import ev
 
 
@@ -208,6 +209,14 @@ def build_snapshots(args: argparse.Namespace) -> None:
         edge_data, hit_rate = _calculate_edge_and_hitrate(prop, stats)
         opponent, is_home = _resolve_matchup(player.get("team"), game)
         projection = projection_map.get((player_id, game_id, prop_type))
+        if not projection:
+            projection = calculate_projection(
+                player_id=player_id,
+                prop_type=prop_type,
+                opponent_team=opponent,
+                is_home=is_home if is_home is not None else True,
+                game_id=game_id,
+            )
         dfs_line = None
         if prop.get("line") is not None:
             dfs_line = get_scraped_dfs_line(player_id, game_id, prop_type, "prizepicks")
@@ -244,6 +253,8 @@ def build_snapshots(args: argparse.Namespace) -> None:
             "snapshot_at": now_iso,
             "source_prop_created_at": prop.get("created_at"),
             "metadata": {
+                "player_name": player.get("name"),
+                "team": player.get("team"),
                 "edge": edge_data,
                 "hit_rate": hit_rate,
                 "sparkline_values": _build_sparkline_values(stats, prop_type),
@@ -272,9 +283,21 @@ def build_snapshots(args: argparse.Namespace) -> None:
     print(f"Upserting {len(rows)} prop feed snapshots...")
     for idx in range(0, len(rows), 100):
         chunk = rows[idx : idx + 100]
-        supabase.table("prop_feed_snapshots").upsert(
-            chunk, on_conflict="prop_id"
-        ).execute()
+        while True:
+            try:
+                supabase.table("prop_feed_snapshots").upsert(
+                    chunk, on_conflict="prop_id"
+                ).execute()
+                break
+            except Exception as exc:
+                msg = str(exc)
+                match = re.search(r"Could not find the '([^']+)' column", msg)
+                if not match:
+                    raise
+                bad_col = match.group(1)
+                print(f"[warn] dropping missing column '{bad_col}' and retrying chunk")
+                for row in chunk:
+                    row.pop(bad_col, None)
     print("Done.")
 
 
