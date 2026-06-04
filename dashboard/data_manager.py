@@ -4,7 +4,6 @@ Odds fetching is locked behind admin password.
 Player data (free APIs) is open to all.
 """
 import sys
-import socket
 from pathlib import Path
 import streamlit as st
 import subprocess
@@ -181,65 +180,4 @@ if require_admin("Enter password to unlock odds fetching"):
                        ["--sport", "MLB", "--hours", "48", "--limit", "1200"])
 
 st.markdown("---")
-
-# ─────────────────────────────────────────────────────────────
-# REMOTE ACCESS GUIDE
-# ─────────────────────────────────────────────────────────────
-st.subheader("📱 Remote Access from Phone")
-
-def _lan_ip():
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(("8.8.8.8", 80)); ip = s.getsockname()[0]; s.close()
-        return ip
-    except Exception:
-        return "127.0.0.1"
-
-ra1, ra2, ra3 = st.tabs(["Same WiFi (now)", "Anywhere — ngrok", "Anywhere — Streamlit Cloud"])
-
-with ra1:
-    st.success("Works right now — open this on your phone while on the same WiFi:")
-    st.code(f"http://{_lan_ip()}:8501")
-    st.caption("Requires this PC to be on and the dashboard running.")
-
-with ra2:
-    st.markdown("""**ngrok** tunnels your local dashboard to a public URL in 2 min.
-```bash
-# 1. Install: https://ngrok.com/download  (free account)
-# 2. One-time auth:
-ngrok config add-authtoken YOUR_TOKEN
-
-# 3. Each time you want remote access:
-ngrok http 8501
-```
-Opens a URL like `https://abc123.ngrok.io` — works from any device, anywhere.
-URL changes each restart unless you upgrade to ngrok paid ($8/mo for static URL).""")
-
-with ra3:
-    st.markdown(f"""**Streamlit Cloud** — always-on free hosting.
-
-**Steps (15 min one-time):**
-
-**1. Push to GitHub**
-```bash
-cd C:\\Users\\Dr3\\Desktop\\sports-betting-dashboard
-git init
-git add .
-git commit -m "APEX Analytics"
-# Create repo at github.com then:
-git remote add origin https://github.com/YOUR_USERNAME/apex-analytics.git
-git push -u origin main
-```
-
-**2. Deploy**
-Go to [share.streamlit.io](https://share.streamlit.io) → New app → your repo → main file: `dashboard/main.py`
-
-**3. Add secrets** (App Settings → Secrets):
-```toml
-SUPABASE_URL    = "https://zehrpfsmgmrwlcaqatbx.supabase.co"
-SUPABASE_KEY    = "eyJ..."
-ODDS_API_KEY    = "e3b128ba620053cb17b5c74ff2181629"
-ADMIN_PASSWORD  = "dr3123!"
-```
-
-Your app will live at `https://YOUR_USERNAME-apex-analytics.streamlit.app` — accessible anywhere.""")
+st.caption("Local URL (same Wi-Fi): shown in the sidebar.")

@@ -1,38 +1,47 @@
 """
-Database client — reads credentials from (in priority order):
-  1. Streamlit secrets  (st.secrets) — used when deployed to Streamlit Cloud
-  2. .env file / environment variables — used locally
-  3. Falls back to local SQLite if neither is configured
+Database client
+===============
+Reads credentials in priority order:
+  1. Streamlit secrets  (st.secrets)  — Streamlit Cloud deployment
+  2. Environment / .env               — local development
+  3. Falls back to local SQLite       — if neither is configured
 """
 import os
 from dotenv import load_dotenv
 
 load_dotenv()
 
-def _get_creds():
-    # Priority 1: Streamlit secrets (Streamlit Cloud deployment)
+
+def _get(key: str) -> str:
+    """Read a secret from st.secrets first, then os.environ."""
+    # Try Streamlit secrets (works on Streamlit Cloud and locally with secrets.toml)
     try:
         import streamlit as st
-        url = st.secrets.get("SUPABASE_URL", "")
-        key = st.secrets.get("SUPABASE_KEY", "")
-        if url and key:
-            return url, key
+        val = st.secrets.get(key, "")
+        if val:
+            return str(val)
     except Exception:
         pass
-    # Priority 2: environment / .env
-    url = os.getenv("SUPABASE_URL", "")
-    key = os.getenv("SUPABASE_KEY", "")
-    return url, key
+    # Fallback to environment variable / .env
+    return os.getenv(key, "")
 
-SUPABASE_URL, SUPABASE_KEY = _get_creds()
+
+SUPABASE_URL = _get("SUPABASE_URL")
+SUPABASE_KEY = _get("SUPABASE_KEY")
+DB_MODE      = "sqlite"   # overwritten below if Supabase connects
 
 if SUPABASE_URL and SUPABASE_KEY:
-    from supabase import create_client, Client
-    supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-    DB_MODE = "supabase"
+    try:
+        from supabase import create_client, Client
+        supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+        DB_MODE = "supabase"
+        print(f"[db] Using supabase backend ({SUPABASE_URL[:40]}...)")
+    except Exception as e:
+        print(f"[db] Supabase init failed ({e}), falling back to SQLite")
+        from services.local_db import LocalDB
+        supabase = LocalDB()
 else:
+    print("[db] No Supabase credentials found — using local SQLite fallback")
     from services.local_db import LocalDB
     supabase = LocalDB()
     DB_MODE = "sqlite"
-
-print(f"[db] Using {DB_MODE} backend")
