@@ -13,7 +13,7 @@ from collections import Counter
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from services.db import supabase, get_db_mode
+from services.db import supabase, DB_MODE
 from services.data_cache import get_players_map
 from utils.model import devig, american_to_prob
 from dashboard.mlb_page import find_pitcher, build_game_model
@@ -181,7 +181,7 @@ def best_ml(odds_rows, team):
 # MAIN
 # ─────────────────────────────────────────────────────────────
 st.title("⚡ Command Center")
-st.caption(f"Live · {get_db_mode().upper()} Engine · {datetime.now().strftime('%b %d %Y %I:%M %p')}")
+st.caption(f"Live · {DB_MODE.upper()} Engine · {datetime.now().strftime('%b %d %Y %I:%M %p')}")
 
 games = load_all_games()
 counts = Counter(g["sport"] for g in games)
