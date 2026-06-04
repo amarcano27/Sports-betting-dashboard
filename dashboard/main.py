@@ -16,6 +16,9 @@ except Exception:
     sys.path.append(str(Path(__file__).parent))
     from premium_styles import apply_theme
 
+from dashboard.auth import login_wall, logout_button
+
+# ── PAGE CONFIG — always first ────────────────────────────────
 st.set_page_config(
     page_title="APEX Analytics",
     layout="wide",
@@ -23,6 +26,10 @@ st.set_page_config(
     page_icon="⚡",
 )
 apply_theme()
+
+# ── LOGIN WALL — block everything until authenticated ─────────
+if not login_wall():
+    st.stop()
 
 PAGE_ROUTES = {
     "Command Center":  "portfolio_showcase.py",
@@ -95,8 +102,8 @@ pages = [
 page = st.navigation(pages, position="sidebar")
 page.run()
 
+logout_button()
+
 with st.sidebar:
-    st.markdown("---")
-    st.caption("📱 Phone access (same Wi-Fi)")
+    st.caption("📱 Phone — same Wi-Fi")
     st.code(f"http://{_local_lan_ip()}:8501", language=None)
-    st.caption("🌐 Remote access → see Data Sync")
