@@ -83,7 +83,8 @@ def get_db_mode() -> str:
     return _db_mode or "unknown"
 
 
-# Legacy alias used in some pages
-@property
-def DB_MODE():
-    return get_db_mode()
+# Legacy alias — module-level string updated on first access
+# (pages that do `from services.db import DB_MODE` get the string directly)
+def _lazy_db_mode():
+    _init()
+    return _db_mode or "unknown"
