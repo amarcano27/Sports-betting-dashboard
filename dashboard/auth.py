@@ -41,60 +41,115 @@ def _hash(s: str) -> str:
 # LEVEL 1 — APP LOGIN WALL
 # ─────────────────────────────────────────────────────────────
 
+_LOGIN_CSS = """
+<style>
+/* ── Hide all default Streamlit chrome on login page ── */
+#MainMenu, header, footer,
+[data-testid="stToolbar"],
+[data-testid="stDecoration"],
+[data-testid="stStatusWidget"],
+[data-testid="stSidebarNav"],
+section[data-testid="stSidebar"] { display: none !important; }
+
+/* ── Full-page centred flex layout ── */
+.stApp {
+    background: #050B14 !important;
+}
+[data-testid="stMain"] .block-container {
+    max-width: 400px !important;
+    padding: 0 24px !important;
+    margin: 0 auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    min-height: 100vh !important;
+}
+
+/* ── Form fields ── */
+[data-testid="stTextInput"] input {
+    background: #0F172A !important;
+    border: 1px solid #334155 !important;
+    border-radius: 8px !important;
+    color: #F8FAFC !important;
+    font-size: 15px !important;
+    padding: 12px 14px !important;
+    text-align: center !important;
+}
+[data-testid="stTextInput"] input:focus {
+    border-color: #06B6D4 !important;
+    box-shadow: 0 0 0 2px rgba(6,182,212,0.25) !important;
+}
+[data-testid="stTextInput"] input::placeholder { color: #475569 !important; }
+
+/* ── Sign In button ── */
+[data-testid="stFormSubmitButton"] button {
+    background: #06B6D4 !important;
+    color: #050B14 !important;
+    border: none !important;
+    border-radius: 8px !important;
+    font-weight: 800 !important;
+    font-size: 15px !important;
+    letter-spacing: 0.04em !important;
+    padding: 12px !important;
+    width: 100% !important;
+    transition: opacity 0.15s !important;
+}
+[data-testid="stFormSubmitButton"] button:hover { opacity: 0.88 !important; }
+
+/* ── Error message ── */
+[data-testid="stAlert"] {
+    border-radius: 8px !important;
+    text-align: center !important;
+}
+</style>
+"""
+
 def login_wall() -> bool:
     """
-    Call at the top of main.py BEFORE st.navigation().
-    Returns True if the user is authenticated; False + renders login screen if not.
-
-    Usage in main.py:
-        if not login_wall():
-            st.stop()
+    Renders a clean centered login screen.
+    Returns True once authenticated, False (+ renders form) when not.
     """
     if st.session_state.get("apex_logged_in"):
         return True
 
-    # Full-page login screen (set_page_config already called by main.py)
-    col = st.columns([1, 2, 1])[1]   # centre column
-    with col:
-        st.markdown("<br><br>", unsafe_allow_html=True)
-        st.markdown(
-            """
-            <div style="text-align:center;margin-bottom:32px">
-              <div style="font-size:48px">⚡</div>
-              <div style="font-size:28px;font-weight:900;color:#F8FAFC;letter-spacing:-0.03em">
-                APEX Analytics
-              </div>
-              <div style="font-size:14px;color:#64748B;margin-top:4px">
-                Private betting dashboard
-              </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+    # Inject login-page CSS (hides sidebar, centres content)
+    st.markdown(_LOGIN_CSS, unsafe_allow_html=True)
 
-        with st.form("apex_login", clear_on_submit=True):
-            pw = st.text_input("Password", type="password",
-                               placeholder="Enter password…",
-                               label_visibility="collapsed")
-            submitted = st.form_submit_button("Sign In", use_container_width=True,
-                                              type="primary")
+    # Branding header
+    st.markdown(
+        """
+        <div style="text-align:center;padding:40px 0 28px">
+          <div style="font-size:52px;line-height:1">⚡</div>
+          <div style="font-size:26px;font-weight:900;color:#F8FAFC;
+                      letter-spacing:-0.03em;margin-top:10px">
+            APEX Analytics
+          </div>
+          <div style="font-size:13px;color:#475569;margin-top:6px;font-weight:500">
+            Enter your password to continue
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
-        if submitted:
-            correct = _get_password()
-            if correct and _hash(pw) == _hash(correct):
-                st.session_state["apex_logged_in"]      = True
-                st.session_state["apex_admin_unlocked"] = True   # admin too
-                st.rerun()
-            else:
-                st.error("Incorrect password — try again.")
+    # Login form
+    with st.form("apex_login", clear_on_submit=True):
+        pw = st.text_input("pw", type="password",
+                           placeholder="Password",
+                           label_visibility="collapsed")
+        submitted = st.form_submit_button("Sign In", use_container_width=True,
+                                          type="primary")
 
-        st.markdown(
-            "<div style='text-align:center;margin-top:24px;"
-            "font-size:12px;color:#475569'>Personal use only</div>",
-            unsafe_allow_html=True,
-        )
+    if submitted:
+        correct = _get_password()
+        if correct and _hash(pw) == _hash(correct):
+            st.session_state["apex_logged_in"]      = True
+            st.session_state["apex_admin_unlocked"] = True
+            st.rerun()
+        else:
+            st.error("Incorrect password")
 
-    return False   # not logged in yet
+    return False
 
 
 def logout_button():
