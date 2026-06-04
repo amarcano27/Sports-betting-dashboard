@@ -1,0 +1,45 @@
+name: Daily Odds Refresh + AI Recommendations
+
+on:
+  schedule:
+    # ── Early morning scan: 7:00 AM ET (11:00 UTC) ─────────────
+    - cron: "0 11 * * *"
+    # ── Midday pull: 11:30 AM ET (15:30 UTC) — closer to first pitch ──
+    - cron: "30 15 * * *"
+  workflow_dispatch:    # allow manual trigger from GitHub UI
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Fetch live odds (all sports)
+        run: python workers/fetch_all_odds.py --sport all
+
+      - name: Fetch player data (free — no credits)
+        run: python workers/fetch_live_players.py --sport nba
+        continue-on-error: true    # don't fail the whole job if player fetch blips
+
+      - name: Build AI recommendations
+        run: python workers/build_ai_recommendations.py
+
+      - name: Done
+        run: echo "Odds refresh complete at $(date)"

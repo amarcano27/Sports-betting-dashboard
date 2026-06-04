@@ -33,6 +33,7 @@ if not login_wall():
 
 PAGE_ROUTES = {
     "Command Center":  "portfolio_showcase.py",
+    "AI Picks":        "ai_recommendations.py",
     "MLB Model":       "mlb_page.py",
     "NBA Model":       "nba_page.py",
     "NHL Model":       "nhl_page.py",
@@ -75,7 +76,8 @@ st.selectbox(
 
 pages = [
     # ── Core ──────────────────────────────────────────────────
-    st.Page("portfolio_showcase.py", title="Command Center", icon=":material/dashboard:",        default=True),
+    st.Page("portfolio_showcase.py",  title="Command Center",    icon=":material/dashboard:",        default=True),
+    st.Page("ai_recommendations.py", title="AI Picks",          icon=":material/auto_awesome:"),
     # ── Sport Models ──────────────────────────────────────────
     st.Page("mlb_page.py",           title="MLB Model",      icon=":material/sports_baseball:"),
     st.Page("nba_page.py",           title="NBA Model",      icon=":material/sports_basketball:"),

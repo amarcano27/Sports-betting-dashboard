@@ -121,3 +121,4 @@ __pycache__/
 *.pyc
 .DS_Store
 
+ai_recommendations_latest.json
