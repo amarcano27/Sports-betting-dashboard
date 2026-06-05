@@ -149,6 +149,39 @@ def render_player_card(player: dict, game: dict, opponent_abbr: str):
     over_pct = pts_hr.get("over", 0)
     hr_color = TOKENS["green"] if over_pct >= 60 else TOKENS["red"] if over_pct < 40 else TOKENS["amber"]
 
+    # Build all stat boxes as one HTML string — never split HTML across st.markdown() calls
+    stat_boxes = ""
+    for lbl, val, line, hr, l5 in [
+        ("PTS", avg_pts, pts_line, pts_hr, l5_pts),
+        ("REB", safe_avg(reb_vals), reb_line, reb_hr, l5_reb),
+        ("AST", safe_avg(ast_vals), ast_line, ast_hr, l5_ast),
+        ("3PM", safe_avg(fg3_vals), fg3_line, None, None),
+        ("STL", safe_avg(stl_vals), None, None, None),
+        ("BLK", safe_avg(blk_vals), None, None, None),
+    ]:
+        op  = hr.get("over", 0) if hr else 0
+        hrc = TOKENS["green"] if op >= 60 else TOKENS["red"] if op < 40 else TOKENS["amber"]
+        trend = ""
+        if l5 is not None and val > 0:
+            diff  = l5 - val
+            arrow = "↑" if diff >= 0 else "↓"
+            clr   = TOKENS["green"] if diff > 0 else TOKENS["red"]
+            trend = f"<div style='font-size:9px;color:{clr}'>{arrow}{abs(diff):.1f} L5</div>"
+        hr_tag = (f"<div style='font-size:9px;color:{hrc};font-weight:700'>"
+                  f"O{line} | {op:.0f}%</div>") if line else ""
+        stat_boxes += f"""
+<div style="background:{TOKENS['bg_main']};border-radius:8px;padding:8px 12px;
+            text-align:center;min-width:60px">
+  <div style="font-size:9px;color:{TOKENS['text_muted']};font-weight:700;
+              text-transform:uppercase">{lbl}</div>
+  <div style="font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:800;
+              color:{TOKENS['text_primary']};margin-top:2px">{val}</div>
+  {hr_tag}{trend}
+</div>"""
+
+    streak_html = (f"&nbsp;&nbsp;<span style='color:{streak_color};font-weight:700'>"
+                   f"{streak_txt}</span>") if streak_txt else ""
+
     st.markdown(f"""
 <div style="background:{TOKENS['bg_panel']};border:1px solid {TOKENS['border_strong']};
             border-radius:12px;overflow:hidden;margin-bottom:18px">
@@ -166,39 +199,15 @@ def render_player_card(player: dict, game: dict, opponent_abbr: str):
       <div style="font-size:19px;font-weight:800;color:{TOKENS['text_primary']};
                   letter-spacing:-0.02em">{name}</div>
       <div style="font-size:12px;color:{TOKENS['text_muted']};margin-top:2px">
-        vs {opponent_abbr} · {game.get('start_time','')[:10]}
-        {"&nbsp; &nbsp;<span style='color:" + streak_color + ";font-weight:700'>" + streak_txt + "</span>" if streak_txt else ""}
+        vs {opponent_abbr} · {game.get('start_time','')[:10]}{streak_html}
       </div>
       <div style="display:flex;gap:20px;margin-top:12px;flex-wrap:wrap">
+        {stat_boxes}
+      </div>
+    </div>
+  </div>
+</div>
 """, unsafe_allow_html=True)
-
-    for lbl, val, line, hr, l5 in [
-        ("PTS", avg_pts, pts_line, pts_hr, l5_pts),
-        ("REB", safe_avg(reb_vals), reb_line, reb_hr, l5_reb),
-        ("AST", safe_avg(ast_vals), ast_line, ast_hr, l5_ast),
-        ("3PM", safe_avg(fg3_vals), fg3_line, None, None),
-        ("STL", safe_avg(stl_vals), None, None, None),
-        ("BLK", safe_avg(blk_vals), None, None, None),
-    ]:
-        op = hr.get("over", 0) if hr else 0
-        hrc = TOKENS["green"] if op >= 60 else TOKENS["red"] if op < 40 else TOKENS["amber"]
-        trend = ""
-        if l5 is not None and val > 0:
-            diff = l5 - val
-            trend = f"<div style='font-size:9px;color:{TOKENS['green'] if diff>0 else TOKENS['red']}'>" \
-                    f"{'↑' if diff>=0 else '↓'}{abs(diff):.1f} L5</div>"
-        st.markdown(f"""
-<div style="background:{TOKENS['bg_main']};border-radius:8px;padding:8px 12px;
-            text-align:center;min-width:60px">
-  <div style="font-size:9px;color:{TOKENS['text_muted']};font-weight:700;
-              text-transform:uppercase">{lbl}</div>
-  <div style="font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:800;
-              color:{TOKENS['text_primary']};margin-top:2px">{val}</div>
-  {"<div style='font-size:9px;color:" + hrc + ";font-weight:700'>O" + str(line) + " | " + f"{op:.0f}%" + "</div>" if line else ""}
-  {trend}
-</div>""", unsafe_allow_html=True)
-
-    st.markdown("</div></div></div>", unsafe_allow_html=True)
 
     # ── Tabs ─────────────────────────────────────────────────
     t1, t2, t3 = st.tabs(["📋 Last 10", "🎯 Props", f"⚔️ vs {opponent_abbr}"])

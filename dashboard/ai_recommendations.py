@@ -272,11 +272,39 @@ def render_llm_slips(llm: dict):
         win_prob = slip.get("win_prob_approx", "")
         note    = slip.get("slip_note", slip.get("reasoning", ""))
 
+        legs_html = ""
+        for li, leg in enumerate(legs):
+            play    = leg.get("play", "")
+            lodds   = leg.get("odds", "")
+            lconf   = leg.get("confidence", "MED")
+            lfire   = leg.get("fire", "🔥")
+            lref    = leg.get("ref", "")
+            lreason = leg.get("key_reason", "")
+            lcolor  = conf_color(lconf)
+            l_odds_color = TOKENS["green"] if str(lodds).startswith("+") else TOKENS["text_primary"]
+            reason_html = (f"<div style='font-size:11px;color:{TOKENS['text_secondary']};margin-top:3px'>"
+                           f"{lreason}</div>") if lreason else ""
+            legs_html += f"""
+<div style="background:{TOKENS['bg_panel_2']};border-radius:8px;padding:10px 12px;
+            margin-bottom:8px;border:1px solid {TOKENS['border']}">
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
+    <div style="flex:1">
+      <div style="font-size:10px;color:{TOKENS['text_muted']};font-weight:700;
+                  text-transform:uppercase;margin-bottom:3px">
+        LEG {li+1} {lfire} <span style="color:{lcolor}">{lref}</span>
+      </div>
+      <div style="font-size:14px;font-weight:800;color:{TOKENS['text_primary']}">{play}</div>
+      {reason_html}
+    </div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:18px;
+                font-weight:800;color:{l_odds_color}">{lodds}</div>
+  </div>
+</div>"""
+
         st.markdown(f"""
 <div style="background:{TOKENS['bg_panel']};border:1px solid {color}44;
             border-left:4px solid {color};border-radius:10px;
             padding:0;margin-bottom:18px;overflow:hidden">
-  <!-- Header -->
   <div style="background:{color}18;padding:14px 18px;
               display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
     <div>
@@ -291,11 +319,9 @@ def render_llm_slips(llm: dict):
       <div style="font-size:11px;color:{TOKENS['text_muted']}">Win prob: {win_prob}</div>
     </div>
   </div>
-  <!-- Note -->
   <div style="padding:10px 18px;background:{TOKENS['bg_panel_2']};
               border-bottom:1px solid {TOKENS['border']};
               font-size:12px;color:{TOKENS['text_secondary']};font-style:italic">{note}</div>
-  <!-- Stats -->
   <div style="padding:10px 18px;display:flex;gap:24px;flex-wrap:wrap;
               border-bottom:1px solid {TOKENS['border']}">
     <div>
@@ -311,39 +337,9 @@ def render_llm_slips(llm: dict):
       <div style="font-weight:700;color:{conf_color(conf)}">{conf}</div>
     </div>
   </div>
-  <!-- Legs -->
-  <div style="padding:12px 18px">
-""", unsafe_allow_html=True)
-
-        for li, leg in enumerate(legs):
-            play  = leg.get("play", "")
-            lodds = leg.get("odds", "")
-            lconf = leg.get("confidence", "MED")
-            lfire = leg.get("fire", "🔥")
-            lref  = leg.get("ref", "")
-            lreason = leg.get("key_reason", "")
-            lcolor  = conf_color(lconf)
-            l_odds_color = TOKENS["green"] if str(lodds).startswith("+") else TOKENS["text_primary"]
-
-            st.markdown(f"""
-<div style="background:{TOKENS['bg_panel_2']};border-radius:8px;padding:10px 12px;
-            margin-bottom:8px;border:1px solid {TOKENS['border']}">
-  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
-    <div style="flex:1">
-      <div style="font-size:10px;color:{TOKENS['text_muted']};font-weight:700;
-                  text-transform:uppercase;margin-bottom:3px">
-        LEG {li+1} {lfire} <span style="color:{lcolor}">{lref}</span>
-      </div>
-      <div style="font-size:14px;font-weight:800;color:{TOKENS['text_primary']}">{play}</div>
-      {"<div style='font-size:11px;color:" + TOKENS['text_secondary'] + ";margin-top:3px'>" + lreason + "</div>" if lreason else ""}
-    </div>
-    <div style="font-family:'JetBrains Mono',monospace;font-size:18px;
-                font-weight:800;color:{l_odds_color}">{lodds}</div>
-  </div>
+  <div style="padding:12px 18px">{legs_html}</div>
 </div>
 """, unsafe_allow_html=True)
-
-        st.markdown("</div></div>", unsafe_allow_html=True)
 
 
 def render_skips(llm: dict):
@@ -540,8 +536,62 @@ def slip_card(slip: dict, idx: int):
     name   = slip.get("name", f"Slip {idx+1}")
     ev_color = TOKENS["green"] if ev50 > 0 else "#EF4444"
 
-    with st.container():
-        st.markdown(f"""
+    legs_html = ""
+    for li, leg in enumerate(legs):
+        lconf    = leg.get("confidence", "MED")
+        lfire    = leg.get("fire", "🔥")
+        lcat     = leg.get("category", "")
+        lodds    = leg.get("odds", 0)
+        lline    = leg.get("line")
+        lplayer  = leg.get("player", "")
+        ledge    = leg.get("edge_pct", 0)
+        lreason  = leg.get("reasoning", "")
+        ltime    = leg.get("game_time", "")
+        lgame    = leg.get("game", "")
+        lmodel   = leg.get("model_prob", 0)
+        lmarket  = leg.get("market_prob", 0)
+        lkelly   = leg.get("kelly_pct", 0)
+        lplus    = leg.get("is_plus_money", False)
+        lsport   = leg.get("sport", "")
+        status_txt, status_clr = STATUS_MAP.get((lconf, lplus), ("⚡ PLAY", TOKENS["amber"]))
+        odds_clr     = TOKENS["green"] if lodds > 0 else TOKENS["text_primary"]
+        line_display = f"O{lline}" if lline else lplayer.split()[-1]
+        sport_icon   = {"MLB": "⚾", "NBA": "🏀", "NHL": "🏒", "NFL": "🏈"}.get(lsport, "🏆")
+        edge_clr     = TOKENS["green"] if ledge >= 5 else TOKENS["amber"]
+        legs_html += f"""
+<div style="background:{TOKENS['bg_panel_2']};border-radius:8px;padding:12px;
+            margin-bottom:8px;border:1px solid {TOKENS['border']}">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px">
+    <div style="flex:1">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+        <span style="font-size:10px;font-weight:800;color:{TOKENS['text_muted']};text-transform:uppercase">{sport_icon} LEG {li+1}</span>
+        <span style="font-size:11px;font-weight:700;color:{status_clr};background:{status_clr}22;padding:1px 6px;border-radius:3px">{status_txt}</span>
+        <span style="font-size:11px;color:{TOKENS['text_muted']}">{lfire}</span>
+      </div>
+      <div style="font-size:15px;font-weight:800;color:{TOKENS['text_primary']}">{lplayer} {line_display}</div>
+      <div style="font-size:11px;color:{TOKENS['text_muted']};margin-top:2px">{lcat} · {lgame} · {ltime}</div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:800;color:{odds_clr}">{fmt_odds(lodds)}</div>
+      <div style="font-size:10px;color:{edge_clr};font-weight:700">Edge +{ledge:.1f}%</div>
+    </div>
+  </div>
+  <div style="background:{TOKENS['bg_main']};border-radius:6px;padding:8px 10px;margin-top:8px;font-size:11px;color:{TOKENS['text_secondary']}">
+    {lreason[:160]}{'...' if len(lreason) > 160 else ''}
+  </div>
+  <div style="display:flex;gap:16px;margin-top:8px;font-size:10px;color:{TOKENS['text_muted']}">
+    <span>Model: <b style="color:{TOKENS['text_primary']}">{lmodel:.0f}%</b></span>
+    <span>Mkt: <b>{lmarket:.0f}%</b></span>
+    <span>Kelly: <b style="color:{TOKENS['amber']}">{lkelly:.1f}%</b></span>
+  </div>
+</div>"""
+
+    tags_html = "".join(
+        f'<div style="background:{color}22;color:{color};padding:2px 8px;border-radius:4px;'
+        f'font-size:10px;font-weight:700;align-self:center">{t}</div>'
+        for t in tags[:3]
+    )
+    st.markdown(f"""
 <div style="background:{TOKENS['bg_panel']};border:1px solid {color}44;
             border-left:4px solid {color};border-radius:10px;
             padding:0;margin-bottom:18px;overflow:hidden">
@@ -574,71 +624,11 @@ def slip_card(slip: dict, idx: int):
       <div style="font-size:9px;color:{TOKENS['text_muted']};text-transform:uppercase">Confidence</div>
       <div style="color:{CONF_COLORS.get(conf, TOKENS['text_muted'])};font-weight:700">{conf}</div>
     </div>
-    {"".join(f'<div style="background:{color}22;color:{color};padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;align-self:center">{t}</div>' for t in tags[:3])}
+    {tags_html}
   </div>
-  <div style="padding:12px 18px">
-""", unsafe_allow_html=True)
-
-        for li, leg in enumerate(legs):
-            lconf    = leg.get("confidence", "MED")
-            lfire    = leg.get("fire", "🔥")
-            lcat     = leg.get("category", "")
-            lodds    = leg.get("odds", 0)
-            lline    = leg.get("line")
-            lplayer  = leg.get("player", "")
-            lside    = leg.get("side", "")
-            ledge    = leg.get("edge_pct", 0)
-            lreason  = leg.get("reasoning", "")
-            ltime    = leg.get("game_time", "")
-            lgame    = leg.get("game", "")
-            lmodel   = leg.get("model_prob", 0)
-            lmarket  = leg.get("market_prob", 0)
-            lkelly   = leg.get("kelly_pct", 0)
-            lplus    = leg.get("is_plus_money", False)
-            lsport   = leg.get("sport", "")
-
-            status_txt, status_clr = STATUS_MAP.get((lconf, lplus), ("⚡ PLAY", TOKENS["amber"]))
-            odds_clr = TOKENS["green"] if lodds > 0 else TOKENS["text_primary"]
-            line_display = f"O{lline}" if lline else lplayer.split()[-1]
-            sport_icon = {"MLB": "⚾", "NBA": "🏀", "NHL": "🏒", "NFL": "🏈"}.get(lsport, "🏆")
-
-            st.markdown(f"""
-<div style="background:{TOKENS['bg_panel_2']};border-radius:8px;padding:12px;
-            margin-bottom:8px;border:1px solid {TOKENS['border']}">
-  <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px">
-    <div style="flex:1">
-      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
-        <span style="font-size:10px;font-weight:800;color:{TOKENS['text_muted']};
-                     text-transform:uppercase">{sport_icon} LEG {li+1}</span>
-        <span style="font-size:11px;font-weight:700;color:{status_clr};
-                     background:{status_clr}22;padding:1px 6px;border-radius:3px">{status_txt}</span>
-        <span style="font-size:11px;color:{TOKENS['text_muted']}">{lfire}</span>
-      </div>
-      <div style="font-size:15px;font-weight:800;color:{TOKENS['text_primary']}">{lplayer} {line_display}</div>
-      <div style="font-size:11px;color:{TOKENS['text_muted']};margin-top:2px">
-        {lcat} · {lgame} · {ltime}
-      </div>
-    </div>
-    <div style="text-align:right">
-      <div style="font-family:'JetBrains Mono',monospace;font-size:20px;
-                  font-weight:800;color:{odds_clr}">{fmt_odds(lodds)}</div>
-      <div style="font-size:10px;color:{TOKENS['green'] if ledge >= 5 else TOKENS['amber']};
-                  font-weight:700">Edge +{ledge:.1f}%</div>
-    </div>
-  </div>
-  <div style="background:{TOKENS['bg_main']};border-radius:6px;padding:8px 10px;
-              margin-top:8px;font-size:11px;color:{TOKENS['text_secondary']}">
-    {lreason[:160]}{'...' if len(lreason) > 160 else ''}
-  </div>
-  <div style="display:flex;gap:16px;margin-top:8px;font-size:10px;color:{TOKENS['text_muted']}">
-    <span>Model: <b style="color:{TOKENS['text_primary']}">{lmodel:.0f}%</b></span>
-    <span>Mkt: <b>{lmarket:.0f}%</b></span>
-    <span>Kelly: <b style="color:{TOKENS['amber']}">{lkelly:.1f}%</b></span>
-  </div>
+  <div style="padding:12px 18px">{legs_html}</div>
 </div>
 """, unsafe_allow_html=True)
-
-        st.markdown("</div></div>", unsafe_allow_html=True)
 
 
 def prop_table(props: list[dict]):
