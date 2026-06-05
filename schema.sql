@@ -88,6 +88,21 @@ create table if not exists player_prop_odds (
   created_at timestamptz default now()
 );
 
+-- AI Recommendations (math engine + LLM analysis)
+create table if not exists ai_recommendations (
+  id           uuid default gen_random_uuid() primary key,
+  generated_at timestamptz not null default now(),
+  n_games      integer,
+  n_plays      integer,
+  slips        jsonb,
+  top_props    jsonb,
+  llm_analysis jsonb,
+  created_at   timestamptz default now()
+);
+
+-- Add llm_analysis column to existing ai_recommendations tables (safe to run if column exists)
+alter table ai_recommendations add column if not exists llm_analysis jsonb;
+
 -- Indexes for performance
 create index if not exists idx_players_team on players(team);
 create index if not exists idx_players_sport on players(sport);
