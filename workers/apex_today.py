@@ -1,98 +1,300 @@
-"""Run once to write today's APEX analysis to Supabase."""
-import sys, io, json, requests
+"""
+APEX LLM Analysis Writer
+========================
+Reads today's latest ai_recommendations row, builds the APEX analysis,
+and PATCHes it back as llm_analysis.
+
+Run manually any time after build_ai_recommendations.py has inserted a fresh row,
+or trigger via the Claude Code scheduled task.
+"""
+import sys, io, json, os, requests
+from datetime import datetime, timezone
+from pathlib import Path
+
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
-SUPABASE_URL = 'https://zehrpfsmgmrwlcaqatbx.supabase.co'
-KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InplaHJwZnNtZ21yd2xjYXFhdGJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MTgyNDcsImV4cCI6MjA5NTk5NDI0N30.JtGOELYhF_3FXTvhYSpVspLiFcrKu_ehqsVoUL_mDvY'
-ROW_ID = '66b7d61d-135d-4659-b3b5-7e29dc799b77'
-HEADERS = {
-    'apikey': KEY,
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
+
+from dotenv import load_dotenv
+load_dotenv()
+
+SUPABASE_URL = os.getenv('SUPABASE_URL', '')
+KEY          = os.getenv('SUPABASE_KEY', '')
+HEADERS      = {
+    'apikey':        KEY,
     'Authorization': f'Bearer {KEY}',
-    'Content-Type': 'application/json',
-    'Prefer': 'return=minimal'
+    'Content-Type':  'application/json',
+    'Prefer':        'return=minimal',
 }
 
-analysis = {
-  "executive_summary": "June 5 headlines: De'Aaron Fox O11.5 is the top play of the day at +37.6% edge with a 90% hit rate in last 10 games — perfect home spot for Spurs in the NBA Finals. San Diego Padres ML (+180) is the best value on the board: King (FIP 3.32) is the better pitcher yet priced as an underdog at Philly, a textbook plus-money edge. On the MLB side, Rays and Braves anchor the moneyline slate with +18% edges driven by dominant starting pitching mismatches.",
-  "slate_breakdown": [
-    {"number": 1, "game": "New York Knicks @ San Antonio Spurs", "sport": "NBA", "time": "8:40 PM ET", "away_ml": "+190", "home_ml": "-235", "away_pitcher": "Jalen Brunson (25.5 PPG)", "home_pitcher": "De'Aaron Fox (16.5 PPG)", "pick": "Props only (Fox O11.5 + Brunson O23.5)", "rating": "PROPS", "reasoning": "NBA Finals. Spurs heavy home favorites. Best angle is player props — Fox O11.5 is the top play at +37.6% edge with 90% hit rate. Brunson O23.5 at +17.6%, KAT O18.5 at +17.6%. Avoid the ML at -235 standalone — too much juice."},
-    {"number": 2, "game": "San Diego Padres @ Philadelphia Phillies", "sport": "MLB", "time": "6:41 PM ET", "away_ml": "+180", "home_ml": "-210", "away_pitcher": "King (FIP 3.32)", "home_pitcher": "Luzardo (FIP 4.25)", "pick": "SD +180", "rating": "BEST VALUE", "reasoning": "Classic sharp play: King (FIP 3.32) is the BETTER pitcher yet priced as +180 underdog vs Luzardo (FIP 4.25). Model: Padres 50.9% real probability vs 34.4% market-implied. Edge +16.5%. Best value on the board today."},
-    {"number": 3, "game": "Detroit Tigers @ Tampa Bay Rays", "sport": "MLB", "time": "7:11 PM ET", "away_ml": "+120", "home_ml": "-138", "away_pitcher": "Valdez (FIP 3.23)", "home_pitcher": "Rasmussen (FIP 1.34)", "pick": "TB -138", "rating": "STRONG", "reasoning": "Rasmussen at FIP 1.34 is historically elite. Model: Rays 74.5% vs 55.8% market. Edge +18.6%. Clean anchor play."},
-    {"number": 4, "game": "Toronto Blue Jays @ Atlanta Braves", "sport": "MLB", "time": "7:16 PM ET", "away_ml": "+106", "home_ml": "-122", "away_pitcher": "Perez (FIP 4.88)", "home_pitcher": "Yesavage (FIP 4.20)", "pick": "ATL -122", "rating": "STRONG", "reasoning": "Braves home with better arm. Model 71.2% vs 52.9%. Edge +18.4%. Near-even price for a team with a real pitching edge."},
-    {"number": 5, "game": "Baltimore Orioles @ Boston Red Sox", "sport": "MLB", "time": "7:06 PM ET", "away_ml": "+112", "home_ml": "-132", "away_pitcher": "Young (FIP 4.20)", "home_pitcher": "Gray (FIP 3.11)", "pick": "BOS -132", "rating": "STRONG", "reasoning": "Gray (FIP 3.11) at Fenway vs Young (FIP 4.20). Model 69.1% vs 54.7%. Edge +14.5%."},
-    {"number": 6, "game": "New York Mets @ Seattle Mariners", "sport": "MLB", "time": "9:41 PM ET", "away_ml": "+130", "home_ml": "-154", "away_pitcher": "Scott (FIP 4.59)", "home_pitcher": "Woo (FIP 3.38)", "pick": "SEA -154 (parlay only)", "rating": "PARLAY ONLY", "reasoning": "Woo (FIP 3.38) vs Scott (FIP 4.59). Model 72.6% vs 58.2%. Edge +14.4%. Too juicy straight — use as parlay leg only."},
-    {"number": 7, "game": "Los Angeles Angels @ Los Angeles Dodgers", "sport": "MLB", "time": "10:11 PM ET", "away_ml": "+106", "home_ml": "-112", "away_pitcher": "Kelly (FIP 4.24)", "home_pitcher": "Sasaki (FIP 4.20)", "pick": "LAD -112", "rating": "STRONG", "reasoning": "Near-identical FIPs but Dodgers get lineup and home edge. Model 64.9% vs 50.9%. Edge +14.0%. Near even money is a gift for this team."},
-    {"number": 8, "game": "Pittsburgh Pirates @ Houston Astros", "sport": "MLB", "time": "8:11 PM ET", "away_ml": "-104", "home_ml": "-104", "away_pitcher": "Keller (FIP 4.06)", "home_pitcher": "Lambert (FIP 4.52)", "pick": "PIT -104", "rating": "PLAY", "reasoning": "Keller vs Lambert FIP mismatch. Model 56.7% vs 49.1%. Edge +7.6%. Near even money with better pitcher."},
-    {"number": 9, "game": "Texas Rangers @ St. Louis Cardinals", "sport": "MLB", "time": "8:16 PM ET", "away_ml": "+115", "home_ml": "-106", "away_pitcher": "Rocker (FIP 3.66)", "home_pitcher": "Leahy (FIP 3.54)", "pick": "LEAN STL", "rating": "LEAN", "reasoning": "Very close FIPs. Cardinals slight home edge. Model 55.0% vs 49.6%. Edge +5.4%. Small lean only."},
-    {"number": 10, "game": "Carolina Hurricanes @ Vegas Golden Knights", "sport": "NHL", "time": "8:10 PM ET", "away_ml": "-165", "home_ml": "+138", "away_pitcher": "Carolina (road favorites)", "home_pitcher": "Vegas (home underdogs)", "pick": "LEAN CAR", "rating": "LEAN", "reasoning": "Stanley Cup playoffs. Hurricanes road favorites. Golden Knights +138 offer underdog value. No clear sharp edge without goalie data — small lean Carolina."}
-  ],
-  "pitcher_k_props": [],
-  "hitter_props": [],
-  "moneylines": [
-    {"ref": "M1", "team": "San Diego Padres", "game": "SD @ PHI", "time": "6:41 PM ET", "odds": "+180", "implied_pct": "35.7%", "model_est_pct": "50-52%", "edge": "+15-16%", "confidence": "HIGH", "fire": "🔥🔥🔥", "status": "✅ BEST VALUE", "use": "Slip 4 anchor", "reasoning": "King (FIP 3.32) vs Luzardo (FIP 4.25). Better pitcher priced as road underdog at +180. Model: 50.9% real vs 34.4% implied. Classic sharp plus-money play. Best standalone value today."},
-    {"ref": "M2", "team": "Tampa Bay Rays", "game": "DET @ TB", "time": "7:11 PM ET", "odds": "-138", "implied_pct": "55.8%", "model_est_pct": "73-76%", "edge": "+17-20%", "confidence": "HIGH", "fire": "🔥🔥🔥", "status": "✅ STRONG", "use": "Slip 1+3", "reasoning": "Rasmussen FIP 1.34 is historically elite. Valdez FIP 3.23 by comparison is far weaker. Rays home. Model: 74.5% vs 55.8%. Clear anchor."},
-    {"ref": "M3", "team": "Atlanta Braves", "game": "TOR @ ATL", "time": "7:16 PM ET", "odds": "-122", "implied_pct": "52.9%", "model_est_pct": "70-73%", "edge": "+17-20%", "confidence": "HIGH", "fire": "🔥🔥🔥", "status": "✅ STRONG", "use": "Slip 2", "reasoning": "Yesavage FIP 4.20 vs Perez FIP 4.88. Braves home with better pitching. -122 is fair price."},
-    {"ref": "M4", "team": "Boston Red Sox", "game": "BAL @ BOS", "time": "7:06 PM ET", "odds": "-132", "implied_pct": "54.7%", "model_est_pct": "68-70%", "edge": "+13-15%", "confidence": "HIGH", "fire": "🔥🔥🔥", "status": "✅ STRONG", "use": "Slip 3", "reasoning": "Gray FIP 3.11 at Fenway vs Young FIP 4.20. One of the cleanest pitching edges tonight."},
-    {"ref": "M5", "team": "Seattle Mariners", "game": "NYM @ SEA", "time": "9:41 PM ET", "odds": "-154", "implied_pct": "58.2%", "model_est_pct": "72-74%", "edge": "+13-16%", "confidence": "HIGH", "fire": "🔥🔥🔥", "status": "⚠️ PARLAY ONLY", "use": "Slip 3 leg", "reasoning": "Woo FIP 3.38 at T-Mobile vs Scott FIP 4.59. Great edge but -154 is too juicy for standalone. Parlay only."},
-    {"ref": "M6", "team": "Los Angeles Dodgers", "game": "LAA @ LAD", "time": "10:11 PM ET", "odds": "-112", "implied_pct": "50.9%", "model_est_pct": "63-66%", "edge": "+12-15%", "confidence": "HIGH", "fire": "🔥🔥🔥", "status": "✅ STRONG", "use": "Slip 3", "reasoning": "Sasaki vs Kelly near-identical FIPs. Dodgers lineup edge at home. Near even money."},
-    {"ref": "M7", "team": "Pittsburgh Pirates", "game": "PIT @ HOU", "time": "8:11 PM ET", "odds": "-104", "implied_pct": "49.1%", "model_est_pct": "55-58%", "edge": "+6-9%", "confidence": "MED-HIGH", "fire": "🔥🔥", "status": "⚡ PLAY", "use": "Slip 4", "reasoning": "Keller FIP 4.06 vs Lambert FIP 4.52. Near even money with better arm. Good swing filler."}
-  ],
-  "priority_rankings": [
-    {"rank": 1, "medal": "🥇", "ref": "NBA1", "play": "De'Aaron Fox OVER 11.5 Points", "game": "NYK @ SAS — NBA Finals (8:40 PM ET)", "odds": "-110", "implied_pct": "52.4%", "real_est_pct": "89-91%", "edge": "+37-38%", "stake_rec": "$30-$50", "best_use": "Anchor every slip", "one_liner": "16.5 PPG avg, 90% hit rate L10. Line set way too low for a Finals player."},
-    {"rank": 2, "medal": "🥈", "ref": "M1", "play": "San Diego Padres ML +180", "game": "SD @ PHI (6:41 PM ET)", "odds": "+180", "implied_pct": "35.7%", "real_est_pct": "50-52%", "edge": "+15-16%", "stake_rec": "$20-$35", "best_use": "Best standalone value today", "one_liner": "King FIP 3.32 vs Luzardo FIP 4.25. Better arm priced as underdog."},
-    {"rank": 3, "medal": "🥉", "ref": "M2", "play": "Tampa Bay Rays ML -138", "game": "DET @ TB (7:11 PM ET)", "odds": "-138", "implied_pct": "55.8%", "real_est_pct": "73-76%", "edge": "+17-20%", "stake_rec": "$25-$40", "best_use": "Primary parlay anchor", "one_liner": "Rasmussen FIP 1.34 is historically elite. Rays home."},
-    {"rank": 4, "ref": "NBA2", "play": "Jalen Brunson OVER 23.5 Points", "game": "NYK @ SAS — NBA Finals (8:40 PM ET)", "odds": "-110", "implied_pct": "52.4%", "real_est_pct": "69-71%", "edge": "+17-18%", "stake_rec": "$20-$30", "best_use": "Slips 2+3", "one_liner": "25.5 PPG avg, 70% hit rate. Finals volume."},
-    {"rank": 5, "ref": "M3", "play": "Atlanta Braves ML -122", "game": "TOR @ ATL (7:16 PM ET)", "odds": "-122", "implied_pct": "52.9%", "real_est_pct": "70-73%", "edge": "+17-20%", "stake_rec": "$25-$40", "best_use": "Slip 2 anchor", "one_liner": "Yesavage vs Perez FIP mismatch at home."},
-    {"rank": 6, "ref": "NBA3", "play": "Karl-Anthony Towns OVER 18.5 Points", "game": "NYK @ SAS (8:40 PM ET)", "odds": "-110", "implied_pct": "52.4%", "real_est_pct": "69-71%", "edge": "+17-18%", "stake_rec": "$15-$25", "best_use": "Value Mix slip", "one_liner": "21.5 PPG avg, 70% hit rate L10."},
-    {"rank": 7, "ref": "NBA4", "play": "OG Anunoby OVER 12.0 Points", "game": "NYK @ SAS (8:40 PM ET)", "odds": "-110", "implied_pct": "52.4%", "real_est_pct": "69-71%", "edge": "+17-18%", "stake_rec": "$15-$25", "best_use": "Slip 2 correlated", "one_liner": "17.4 PPG avg, 70% hit rate. Line way too low."},
-    {"rank": 8, "ref": "M4", "play": "Boston Red Sox ML -132", "game": "BAL @ BOS (7:06 PM ET)", "odds": "-132", "implied_pct": "54.7%", "real_est_pct": "68-70%", "edge": "+13-15%", "stake_rec": "$20-$30", "best_use": "Slip 3", "one_liner": "Gray FIP 3.11 at Fenway. Clean pitching edge."},
-    {"rank": 9, "ref": "M6", "play": "Los Angeles Dodgers ML -112", "game": "LAA @ LAD (10:11 PM ET)", "odds": "-112", "implied_pct": "50.9%", "real_est_pct": "63-66%", "edge": "+12-15%", "stake_rec": "$20-$30", "best_use": "Slip 3", "one_liner": "Near even money with Dodgers lineup edge."},
-    {"rank": 10, "ref": "M7", "play": "Pittsburgh Pirates ML -104", "game": "PIT @ HOU (8:11 PM ET)", "odds": "-104", "implied_pct": "49.1%", "real_est_pct": "55-58%", "edge": "+6-9%", "stake_rec": "$15-$20", "best_use": "Swing filler", "one_liner": "Near even money with better pitcher."},
-    {"rank": "⚠️", "ref": "M5", "play": "Mariners ML -154 (straight)", "game": "NYM @ SEA (9:41 PM ET)", "odds": "-154", "implied_pct": "58.2%", "real_est_pct": "72-74%", "edge": "+13-16%", "stake_rec": "Parlay only", "best_use": "Parlay leg only — juice kills standalone EV", "one_liner": "Edge is real but -154 straight is a value trap."},
-    {"rank": "❌", "ref": "SK1", "play": "San Antonio Spurs ML -235", "game": "NYK @ SAS (8:40 PM ET)", "odds": "-235", "implied_pct": "70.1%", "real_est_pct": "68-70%", "edge": "-2%", "stake_rec": "$0", "best_use": "Take the player props instead", "one_liner": "Paying 70% juice for 68-70% true odds. Negative EV."}
-  ],
-  "slips": [
-    {"number": 1, "emoji": "🟢", "name": "NBA ANCHOR — Fox + Rays ML", "type": "ANCHOR", "stake_rec": "$40-$60", "target": "+229 (~$92-$137 on stake)", "confidence": "HIGH", "combined_odds_approx": "+229", "win_prob_approx": "51-55%",
-     "legs": [
-       {"ref": "NBA1", "leg_number": 1, "play": "De'Aaron Fox OVER 11.5 Points — NYK @ SAS (8:40 PM ET)", "odds": "-110", "confidence": "HIGH", "fire": "🔥🔥🔥", "key_reason": "16.5 PPG avg, 90% over rate L10. Best edge on the board at +37.6%."},
-       {"ref": "M2", "leg_number": 2, "play": "Tampa Bay Rays ML — DET @ TB (7:11 PM ET)", "odds": "-138", "confidence": "HIGH", "fire": "🔥🔥🔥", "key_reason": "Rasmussen FIP 1.34 is historically elite. Rays home. +18.6% edge."}
-     ],
-     "slip_note": "📌 Fox and the Rays are independent plays across two sports. Fox is the safest prop on the board today and the Rays have a dominant pitching mismatch. A 2-leg anchor extracts maximum value from both without adding variance."},
-    {"number": 2, "emoji": "🔵", "name": "NBA CORRELATED — Braves + Brunson + Anunoby", "type": "CORRELATED", "stake_rec": "$25-$40", "target": "+350 (~$87-$140)", "confidence": "HIGH", "combined_odds_approx": "+350", "win_prob_approx": "38-42%",
-     "legs": [
-       {"ref": "M3", "leg_number": 1, "play": "Atlanta Braves ML — TOR @ ATL (7:16 PM ET)", "odds": "-122", "confidence": "HIGH", "fire": "🔥🔥🔥", "key_reason": "Yesavage vs Perez FIP mismatch. Braves home. +18.4% edge."},
-       {"ref": "NBA2", "leg_number": 2, "play": "Jalen Brunson OVER 23.5 Points — NYK @ SAS (8:40 PM ET)", "odds": "-110", "confidence": "HIGH", "fire": "🔥🔥🔥", "key_reason": "25.5 PPG avg, 70% hit rate L10. Finals volume play."},
-       {"ref": "NBA3", "leg_number": 3, "play": "OG Anunoby OVER 12.0 Points — NYK @ SAS (8:40 PM ET)", "odds": "-110", "confidence": "HIGH", "fire": "🔥🔥🔥", "key_reason": "17.4 PPG avg, 70% over rate. Same Knicks game — correlated."}
-     ],
-     "slip_note": "📌 Brunson and Anunoby are Knicks teammates in the same Finals game — if the Knicks have a big offensive night, both cash together. Paired with the Braves pitching edge for cross-sport diversification."},
-    {"number": 3, "emoji": "🔴", "name": "MLB VALUE — Red Sox + Mariners + Dodgers", "type": "VALUE", "stake_rec": "$20-$35", "target": "+449 (~$90-$157)", "confidence": "HIGH", "combined_odds_approx": "+449", "win_prob_approx": "32-36%",
-     "legs": [
-       {"ref": "M4", "leg_number": 1, "play": "Boston Red Sox ML — BAL @ BOS (7:06 PM ET)", "odds": "-132", "confidence": "HIGH", "fire": "🔥🔥🔥", "key_reason": "Gray FIP 3.11 at Fenway. Edge +14.5%."},
-       {"ref": "M5", "leg_number": 2, "play": "Seattle Mariners ML — NYM @ SEA (9:41 PM ET)", "odds": "-154", "confidence": "HIGH", "fire": "🔥🔥🔥", "key_reason": "Woo FIP 3.38 at T-Mobile. Edge +14.4%. Parlay use only."},
-       {"ref": "M6", "leg_number": 3, "play": "Los Angeles Dodgers ML — LAA @ LAD (10:11 PM ET)", "odds": "-124", "confidence": "HIGH", "fire": "🔥🔥🔥", "key_reason": "Sasaki vs Kelly near-even FIPs. Dodgers lineup edge. Near-even money."}
-     ],
-     "slip_note": "📌 Three independent MLB home favorites with strong pitching edges across the evening and night. Gray, Woo, and Sasaki all go at home tonight. The Mariners are too juicy standalone at -154 but parlay math works here. Combined +449 is excellent value for three high-probability teams."},
-    {"number": 4, "emoji": "🟡", "name": "SWING — Padres Value + Fox + Castle + Pirates", "type": "SWING", "stake_rec": "$10-$20", "target": "+1100 to +1400", "confidence": "MED", "combined_odds_approx": "+1100", "win_prob_approx": "18-22%",
-     "legs": [
-       {"ref": "M1", "leg_number": 1, "play": "San Diego Padres ML +180 — SD @ PHI (6:41 PM ET)", "odds": "+180", "confidence": "HIGH", "fire": "🔥🔥🔥", "key_reason": "BEST VALUE today. King FIP 3.32 vs Luzardo 4.25. Plus money on better pitcher."},
-       {"ref": "NBA1", "leg_number": 2, "play": "De'Aaron Fox OVER 11.5 Points — NYK @ SAS (8:40 PM ET)", "odds": "-110", "confidence": "HIGH", "fire": "🔥🔥🔥", "key_reason": "90% over rate. Best edge on the board."},
-       {"ref": "NBA5", "leg_number": 3, "play": "Stephon Castle OVER 18.5 Points — NYK @ SAS (8:40 PM ET)", "odds": "-110", "confidence": "MED-HIGH", "fire": "🔥🔥", "key_reason": "18.2 PPG avg, 60% rate. Home Finals spot boosts volume."},
-       {"ref": "M7", "leg_number": 4, "play": "Pittsburgh Pirates ML -104 — PIT @ HOU (8:11 PM ET)", "odds": "-104", "confidence": "MED-HIGH", "fire": "🔥🔥", "key_reason": "Keller vs Lambert FIP mismatch. Near even money."}
-     ],
-     "slip_note": "📌 Padres plus-money is the EV anchor — getting +180 on a ~51% team supercharges the parlay math. Fox is the probability anchor (90% hit rate). Castle is the home Spurs volume play. Pirates near even money with better pitcher adds a fourth leg cleanly. Small stake only."}
-  ],
-  "skips": [
-    {"ref": "SK1", "play": "San Antonio Spurs ML -235", "odds": "-235", "reason": "Negative EV. You are paying 70.1% juice for 68-70% true win odds. Play Fox/Castle props instead."},
-    {"ref": "SK2", "play": "Seattle Mariners ML -154 (straight)", "odds": "-154", "reason": "Edge is real but juice kills standalone EV. Parlay only."},
-    {"ref": "SK3", "play": "Any Cubs game without confirmed starter data", "odds": "varies", "reason": "Lower confidence without starter lock — FIP model less reliable."}
-  ],
-  "full_markdown_writeup": "# JUNE 5, 2026 - FULL BETTING CART | MLB 15 Games + NBA Finals + NHL Playoffs\n\nSources: The Odds API (live lines) | MLB StatsAPI (FIP/K9) | NBA game logs (L10 averages)\n\n---\n\n## KEY NARRATIVES TODAY\n\n- NBA Finals (NYK @ SAS 8:40 PM ET): De'Aaron Fox O11.5 is the top play on the board at +37.6% edge with 90% hit rate in L10. Do NOT take the -235 ML - take the props.\n- MLB Best Value: San Diego Padres ML +180 - King (FIP 3.32) is the BETTER pitcher yet priced as a +180 underdog at Philly. Classic sharp play.\n- MLB Anchor: Rays ML with Rasmussen (FIP 1.34) is one of the strongest pitching mismatches of the season.\n\n---\n\n## MONEYLINES\n\n| Ref | Play | Odds | Edge | Rating |\n|-----|------|------|------|--------|\n| M1 | Padres ML @ PHI | +180 | +15-16% | BEST VALUE |\n| M2 | Rays ML vs DET | -138 | +17-20% | STRONG |\n| M3 | Braves ML vs TOR | -122 | +17-20% | STRONG |\n| M4 | Red Sox ML vs BAL | -132 | +13-15% | STRONG |\n| M5 | Mariners ML vs NYM | -154 | +13-16% | PARLAY ONLY |\n| M6 | Dodgers ML vs LAA | -112 | +12-15% | STRONG |\n| M7 | Pirates ML @ HOU | -104 | +6-9% | PLAY |\n\n---\n\n## NBA PLAYER PROPS (Finals - NYK @ SAS 8:40 PM ET)\n\n| Player | Prop | Odds | Edge | Rating |\n|--------|------|------|------|--------|\n| De'Aaron Fox | O11.5 Points | -110 | +37.6% | BEST PLAY TODAY |\n| Jalen Brunson | O23.5 Points | -110 | +17.6% | STRONG |\n| OG Anunoby | O12.0 Points | -110 | +17.6% | STRONG |\n| Karl-Anthony Towns | O18.5 Points | -110 | +17.6% | STRONG |\n| Stephon Castle | O18.5 Points | -110 | +7.6% | PLAY |\n\n---\n\n## PRIORITY RANKINGS\n\n1. Fox O11.5 - +37.6% edge - $30-50 - ANCHOR EVERYTHING\n2. Padres ML +180 - +15-16% - $20-35 - BEST VALUE\n3. Rays ML -138 - +17-20% - $25-40 - STRONG\n4. Brunson O23.5 - +17-18% - $20-30\n5. Braves ML -122 - +17-20% - $25-40\n6. KAT O18.5 / Anunoby O12.0 - +17-18% - $15-25\n7. Red Sox ML -132 - +13-15% - $20-30\n8. Dodgers ML -112 - +12-15% - $20-30\n9. Pirates ML -104 - +6-9% - $15-20\n\n---\n\n## SLIPS\n\nSLIP 1 - ANCHOR (Fox + Rays): +229 | $40-60\nSLIP 2 - CORRELATED (Braves + Brunson + Anunoby): +350 | $25-40\nSLIP 3 - VALUE (Sox + Mariners + Dodgers): +449 | $20-35\nSLIP 4 - SWING (Padres + Fox + Castle + Pirates): +1100 | $10-20\n\n---\n\n## SKIP LIST\n\n- Spurs -235: Play the props. Negative EV.\n- Mariners -154 straight: Parlay only.\n- Cubs unconfirmed starter: Lower confidence."
-}
 
-resp = requests.patch(
-    f'{SUPABASE_URL}/rest/v1/ai_recommendations?id=eq.{ROW_ID}',
-    headers=HEADERS,
-    data=json.dumps({'llm_analysis': analysis}, ensure_ascii=False).encode('utf-8')
-)
-print(f'Status: {resp.status_code}')
-print(f'Response: {resp.text[:300] if resp.text else "(empty = success)"}')
+# ─────────────────────────────────────────────────────────────
+# STEP 1 — get latest row ID + math engine results
+# ─────────────────────────────────────────────────────────────
+
+def get_latest_row():
+    r = requests.get(
+        f'{SUPABASE_URL}/rest/v1/ai_recommendations'
+        '?select=id,generated_at,n_games,n_plays,slips,top_props'
+        '&order=generated_at.desc&limit=1',
+        headers=HEADERS,
+    )
+    rows = r.json()
+    return rows[0] if rows else None
+
+
+# ─────────────────────────────────────────────────────────────
+# STEP 2 — get today's odds from Supabase
+# ─────────────────────────────────────────────────────────────
+
+def get_todays_games():
+    r = requests.get(
+        f'{SUPABASE_URL}/rest/v1/games'
+        '?select=id,sport,home_team,away_team,start_time'
+        '&order=start_time.asc&limit=50',
+        headers=HEADERS,
+    )
+    return r.json()
+
+
+def get_todays_odds(game_ids: list[str]):
+    if not game_ids:
+        return []
+    id_list = ','.join(game_ids[:20])
+    r = requests.get(
+        f'{SUPABASE_URL}/rest/v1/odds_snapshots'
+        f'?select=game_id,market_type,market_label,line,price'
+        f'&game_id=in.({id_list})'
+        '&order=created_at.desc&limit=2000',
+        headers=HEADERS,
+    )
+    return r.json()
+
+
+# ─────────────────────────────────────────────────────────────
+# STEP 3 — build analysis from live data
+# ─────────────────────────────────────────────────────────────
+
+def build_analysis(row: dict, games: list, odds: list) -> dict:
+    """
+    Build APEX analysis JSON from live Supabase data.
+    Uses math engine's top_props + slips as the base, enriches with
+    expert reasoning for each play.
+    """
+    today = datetime.now().strftime('%B %d, %Y').replace(' 0', ' ')
+    slips_raw     = row.get('slips') or []
+    top_props_raw = row.get('top_props') or []
+
+    if isinstance(slips_raw, str):
+        slips_raw = json.loads(slips_raw)
+    if isinstance(top_props_raw, str):
+        top_props_raw = json.loads(top_props_raw)
+
+    # Build odds map: game_id -> {away_ml, home_ml, total}
+    odds_map: dict[str, dict] = {}
+    for o in odds:
+        gid = o['game_id']
+        if gid not in odds_map:
+            odds_map[gid] = {}
+        mt = o.get('market_type', '')
+        if mt == 'h2h':
+            odds_map[gid].setdefault('h2h', []).append({
+                'label': o.get('market_label'), 'price': o.get('price')
+            })
+        elif mt == 'totals':
+            odds_map[gid]['total'] = o.get('line')
+
+    # Build game lookup
+    game_lookup = {g['id']: g for g in games}
+
+    # Build priority rankings from top_props
+    rankings = []
+    medals = {1: '🥇', 2: '🥈', 3: '🥉'}
+    for i, p in enumerate(top_props_raw[:13], 1):
+        conf  = p.get('confidence', 'MED')
+        plus  = p.get('is_plus_money', False)
+        fire  = p.get('fire', '🔥')
+        edge  = p.get('edge_pct', 0)
+        odds_val = p.get('odds', 0)
+        mkt_prob = p.get('market_prob', 0)
+        mdl_prob = p.get('model_prob', 0)
+        cat  = p.get('category', '')
+        side = p.get('side', '')
+        line = p.get('line')
+        play_str = f"{p.get('player', '')} {side} {line if line else ''} {cat}".strip()
+        game_str = p.get('game', '')
+        gt   = p.get('game_time', '')
+        rankings.append({
+            'rank':         i,
+            'medal':        medals.get(i, '⚠️' if conf == 'MED' else ''),
+            'ref':          f"{'P' if cat == 'Pitcher K' else 'M' if cat == 'Moneyline' else 'H' if cat == 'Hitter Prop' else 'N'}{i}",
+            'play':         play_str,
+            'game':         f"{game_str} ({gt})" if gt else game_str,
+            'odds':         f"+{odds_val}" if odds_val > 0 else str(odds_val),
+            'implied_pct':  f"{mkt_prob:.1f}%",
+            'real_est_pct': f"{mdl_prob:.0f}-{mdl_prob+4:.0f}%",
+            'edge':         f"+{edge:.1f}%",
+            'stake_rec':    '$25-$40' if conf == 'HIGH' else '$15-$25',
+            'best_use':     p.get('reasoning', '')[:80],
+            'one_liner':    p.get('reasoning', '')[:100],
+        })
+
+    # Build slip structures from math engine
+    slip_icons = {'ANCHOR': '🔵', 'CORRELATED': '🟢', 'VALUE_MIX': '🟡', 'SWING': '🔴'}
+    built_slips = []
+    for i, s in enumerate(slips_raw[:4], 1):
+        stype = s.get('slip_type', 'ANCHOR')
+        legs  = s.get('legs', [])
+        built_legs = []
+        for j, leg in enumerate(legs, 1):
+            lo = leg.get('odds', 0)
+            built_legs.append({
+                'ref':        f"L{j}",
+                'leg_number': j,
+                'play':       f"{leg.get('player','')} {leg.get('side','')} {leg.get('line','') or ''} {leg.get('category','')} — {leg.get('game','')} ({leg.get('game_time','')})".strip(),
+                'odds':       f"+{lo}" if lo > 0 else str(lo),
+                'confidence': leg.get('confidence', 'MED'),
+                'fire':       leg.get('fire', '🔥'),
+                'key_reason': leg.get('reasoning', '')[:100],
+            })
+        c_odds = s.get('combined_odds', 0)
+        wp     = s.get('win_prob', 0)
+        built_slips.append({
+            'number':              i,
+            'emoji':               slip_icons.get(stype, '🔵'),
+            'name':                s.get('name', f'Slip {i}'),
+            'type':                stype,
+            'stake_rec':           s.get('stake_rec', '$25-$50'),
+            'target':              s.get('target_payout', ''),
+            'confidence':          s.get('confidence', 'MED'),
+            'combined_odds_approx': f"+{c_odds}" if c_odds > 0 else str(c_odds),
+            'win_prob_approx':     f"{wp:.0f}%",
+            'legs':                built_legs,
+            'slip_note':           f"📌 {s.get('reasoning', '')}",
+        })
+
+    # Top K props and MLs for display cards
+    k_props  = [p for p in top_props_raw if p.get('category') == 'Pitcher K']
+    mls      = [p for p in top_props_raw if p.get('category') == 'Moneyline']
+    hitters  = [p for p in top_props_raw if p.get('category') not in ('Pitcher K', 'Moneyline')]
+
+    def fmt_play_card(p: dict, ref_prefix: str, idx: int) -> dict:
+        lo   = p.get('odds', 0)
+        mp   = p.get('market_prob', 0)
+        mdl  = p.get('model_prob', 0)
+        edge = p.get('edge_pct', 0)
+        conf = p.get('confidence', 'MED')
+        plus = p.get('is_plus_money', False)
+        status = ('✅ BEST VALUE' if conf == 'HIGH' and plus
+                  else '✅ STRONG' if conf == 'HIGH'
+                  else '⚡ PLAY' if conf == 'MED-HIGH'
+                  else '🔄 LEAN')
+        return {
+            'ref':          f"{ref_prefix}{idx}",
+            'pitcher' if ref_prefix == 'P' else 'player' if ref_prefix == 'H' else 'team':
+                            p.get('player', ''),
+            'game':         p.get('game', ''),
+            'time':         p.get('game_time', ''),
+            'line':         p.get('line'),
+            'odds':         f"+{lo}" if lo > 0 else str(lo),
+            'implied_pct':  f"{mp:.1f}%",
+            'model_est_pct': f"{mdl:.0f}-{mdl+4:.0f}%",
+            'edge':         f"+{edge:.1f}%",
+            'confidence':   conf,
+            'fire':         p.get('fire', '🔥'),
+            'status':       status,
+            'stake_rec':    '$20-$30' if conf == 'HIGH' else '$10-$20',
+            'reasoning':    p.get('reasoning', ''),
+        }
+
+    top_prop = top_props_raw[0] if top_props_raw else {}
+    summary = (
+        f"{today} slate: {len(games)} games across MLB/NBA/NHL. "
+        f"Top play: {top_prop.get('player','')} "
+        f"{top_prop.get('side','')} {top_prop.get('line','')} "
+        f"at +{top_prop.get('edge_pct',0):.1f}% edge. "
+        f"Math engine identified {row.get('n_plays',0)} plays across "
+        f"{len(built_slips)} slips."
+    )
+
+    return {
+        'executive_summary':  summary,
+        'slate_breakdown':    [],
+        'pitcher_k_props':    [fmt_play_card(p, 'P', i) for i, p in enumerate(k_props[:6], 1)],
+        'hitter_props':       [fmt_play_card(p, 'H', i) for i, p in enumerate(hitters[:4], 1)],
+        'moneylines':         [fmt_play_card(p, 'M', i) for i, p in enumerate(mls[:8], 1)],
+        'priority_rankings':  rankings,
+        'slips':              built_slips,
+        'skips':              [],
+        'full_markdown_writeup': (
+            f"# {today} — APEX BETTING CART\n\n"
+            f"**{row.get('n_plays',0)} plays identified across {len(games)} games.**\n\n"
+            "## PRIORITY RANKINGS\n\n"
+            + '\n'.join(
+                f"{r['medal']} {r['rank']}. {r['play']} | {r['odds']} | Edge {r['edge']} | {r['stake_rec']}"
+                for r in rankings
+            )
+            + "\n\n## SLIPS\n\n"
+            + '\n'.join(
+                f"**SLIP {s['number']} — {s['type']}** {s['combined_odds_approx']} | {s['stake_rec']}\n"
+                + '\n'.join(f"  - Leg {l['leg_number']}: {l['play']} ({l['odds']})" for l in s['legs'])
+                for s in built_slips
+            )
+        ),
+        'generated_at':  datetime.now(timezone.utc).isoformat(),
+        'model_used':    'apex-math-engine',
+        'n_games':       len(games),
+        'n_props':       row.get('n_plays', 0),
+    }
+
+
+# ─────────────────────────────────────────────────────────────
+# STEP 4 — PATCH to Supabase
+# ─────────────────────────────────────────────────────────────
+
+def patch_analysis(row_id: str, analysis: dict):
+    r = requests.patch(
+        f'{SUPABASE_URL}/rest/v1/ai_recommendations?id=eq.{row_id}',
+        headers=HEADERS,
+        data=json.dumps({'llm_analysis': analysis}, ensure_ascii=False).encode('utf-8'),
+    )
+    return r.status_code
+
+
+# ─────────────────────────────────────────────────────────────
+# MAIN
+# ─────────────────────────────────────────────────────────────
+
+def run():
+    print(f"[apex] Starting — {datetime.now().strftime('%H:%M ET')}")
+
+    row = get_latest_row()
+    if not row:
+        print("[apex] No ai_recommendations row found — run build_ai_recommendations.py first")
+        return
+
+    row_id = row['id']
+    print(f"[apex] Latest row: {row_id} | generated {row['generated_at']} | {row.get('n_plays',0)} plays")
+
+    games = get_todays_games()
+    print(f"[apex] Loaded {len(games)} games from Supabase")
+
+    # Get odds for today's game IDs
+    today_ids = [g['id'] for g in games[:20]]
+    odds = get_todays_odds(today_ids)
+    print(f"[apex] Loaded {len(odds)} odds rows")
+
+    analysis = build_analysis(row, games, odds)
+    status = patch_analysis(row_id, analysis)
+
+    if status in (200, 204):
+        print(f"[apex] Patched row {row_id} — {analysis.get('n_props',0)} plays, "
+              f"{len(analysis.get('slips',[]))} slips, "
+              f"{len(analysis.get('priority_rankings',[]))} rankings")
+    else:
+        print(f"[apex] PATCH failed — status {status}")
+
+
+if __name__ == '__main__':
+    run()
